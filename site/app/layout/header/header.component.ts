@@ -1,75 +1,93 @@
-import { Component, OnInit } from '@angular/core';
-import { Router } from '@angular/router';
-import { SettingsService } from '@delon/theme';
+import { Component, OnInit, ViewChild, Input } from '@angular/core';
+import { Router, NavigationEnd } from '@angular/router';
+import { filter } from 'rxjs/operators';
+import { NzMessageService } from 'ng-zorro-antd';
+import { copy } from '@delon/util';
 
-import { I18NService } from '../../i18n/service';
+import { I18NService } from '../../core/i18n/service';
+import { MobileService } from '../../core/mobile.service';
 import { MetaService } from '../../core/meta.service';
+import { MetaSearchGroup, MetaSearchGroupItem } from '../../interfaces';
 
 @Component({
-    selector: 'app-header',
-    templateUrl: './header.component.html',
-    styleUrls: [ './header.component.less' ]
+  selector: 'app-header',
+  templateUrl: './header.component.html',
+  host: {
+    '[attr.id]': '"header"',
+  },
 })
 export class HeaderComponent implements OnInit {
-    constructor(
-        public i18n: I18NService,
-        private meta: MetaService,
-        private settings: SettingsService,
-        private router: Router
-    ) {}
+  isMobile: boolean;
 
-    searching = false;
-    item: any;
-    list: any[] = [];
-    timer: any;
+  constructor(
+    public i18n: I18NService,
+    private router: Router,
+    private msg: NzMessageService,
+    private mobileSrv: MobileService,
+    private meta: MetaService
+  ) {
+    router.events
+      .pipe(filter(evt => evt instanceof NavigationEnd))
+      .subscribe(() => this.hideMenu());
+    this.mobileSrv.change.subscribe(res => (this.isMobile = res));
+  }
 
-    change(key: string) {
-        clearTimeout(this.timer);
-        if (!key) return;
+  ngOnInit(): void {
+    // this.initDocSearch();
+    this.changeQ('');
+  }
 
-        this.searching = true;
-        this.timer = setTimeout(() => this.search(key), 200);
-    }
+  @ViewChild('searchIpt') searchIpt: HTMLInputElement;
 
-    search(key: string) {
-        const ret: any[] = [];
-        this.meta.data.types.forEach((item: any) => {
-            const typeRet: any[] = item.list.filter((entry: any) => {
-                let find = false;
-                for (let i = 0; i < this.i18n.langs.length; i++) {
-                    const meta = entry.meta[this.i18n.langs[i]];
-                    if (meta && ~meta.title.indexOf(key)) {
-                        find = true;
-                        break;
-                    }
-                }
-                return find;
-            });
-            if (typeRet.length === 0) return;
-            ret.push({
-                type: item.name,
-                list: typeRet
-            });
+  initDocSearch() {
+    const lang = this.i18n.isZh ? 'cn' : 'en';
+    docsearch({
+      apiKey: '6356fe022dba23c6bfc63427b2042bf8',
+      indexName: 'ng_alain',
+      inputSelector: '#search-box input',
+      algoliaOptions: { facetFilters: [`tags:${lang}`] },
+      transformData(hits) {
+        hits.forEach(hit => {
+          hit.url = hit.url.replace('ant.design', location.host);
+          hit.url = hit.url.replace('https:', location.protocol);
         });
-        this.list = ret;
-        this.searching = false;
-    }
+        return hits;
+      },
+      debug: false, // Set debug to true if you want to inspect the dropdown
+    });
+  }
 
-    genTitle(item: any) {
-        const meta = item.meta[this.i18n.lang] || item.meta[this.i18n.defaultLang];
-        return meta ? `${meta.title}${meta.subtitle ? '-' + meta.subtitle : ''}` : ``;
-    }
+  langChange() {
+    let url = this.router.url.split('#')[0].split('?')[0];
+    url += `?lang=${this.i18n.isZh ? 'en-US' : 'zh-CN'}`;
 
-    select(url: string) {
-        if (!url) return;
-        this.router.navigateByUrl(url);
-    }
+    this.router.navigateByUrl(url);
+  }
 
-    ngOnInit(): void {
+  onCopy(value: string) {
+    copy(value).then(() =>
+      this.msg.success(this.i18n.fanyi('app.demo.copied')),
+    );
+  }
 
-    }
+  menuVisible = false;
 
-    toggleMenu() {
-        this.settings.layout.collapsed = !this.settings.layout.collapsed;
-    }
+  showMenu() {
+    this.menuVisible = true;
+  }
+
+  hideMenu() {
+    this.menuVisible = false;
+  }
+
+  q: string;
+  list: MetaSearchGroup[] = [];
+  changeQ(value: any) {
+    this.list = this.meta.search(value);
+  }
+
+  to(item: MetaSearchGroupItem) {
+    if (item.url)
+      this.router.navigateByUrl(item.url);
+  }
 }

@@ -1,5 +1,6 @@
+import { preloaderFinished } from '@delon/theme';
 import { NgModule } from '@angular/core';
-import { RouterModule } from '@angular/router';
+import { RouterModule, PreloadAllModules } from '@angular/router';
 import { SharedModule } from '../shared/shared.module';
 import { LayoutComponent } from '../layout/layout.component';
 import { HomeComponent } from './home/home.component';
@@ -15,10 +16,20 @@ const routes = [
         path: '',
         component: LayoutComponent,
         children: [
-            { path: '', component: HomeComponent },
+            { path: '', component: HomeComponent, data: { titleI18n: 'slogan'} },
+            { path: 'theme', loadChildren: './theme/theme.module#ThemeModule' },
+            { path: '6to7', loadChildren: './6to7/6to7.module#SixToSevenModule' },
             // region: region routers
             { path: 'docs', loadChildren: './gen/docs/docs.module#DocsModule' },
-            { path: 'components', loadChildren: './gen/components/components.module#ComponentsModule' }
+            { path: 'components', loadChildren: './gen/components/components.module#ComponentsModule' },
+            { path: 'auth', loadChildren: './gen/auth/auth.module#AuthModule' },
+            { path: 'acl', loadChildren: './gen/acl/acl.module#AclModule' },
+            { path: 'cache', loadChildren: './gen/cache/cache.module#CacheModule' },
+            { path: 'mock', loadChildren: './gen/mock/mock.module#MockModule' },
+            { path: 'util', loadChildren: './gen/util/util.module#UtilModule' },
+            { path: 'form', loadChildren: './gen/form/form.module#FormModule' },
+            { path: 'form-pages', loadChildren: './form-pages/form-pages.module#FormPagesModule' },
+            { path: 'cli', loadChildren: './gen/cli/cli.module#CliModule' },
             // endregion
         ]
     },
@@ -29,7 +40,7 @@ const routes = [
 @NgModule({
     imports: [
         SharedModule,
-        RouterModule.forRoot(routes)
+        RouterModule.forRoot(routes, { preloadingStrategy: PreloadAllModules })
     ],
     declarations: [
         ...COMPONENTS

@@ -1,16 +1,17 @@
 import { NgModule, Optional, SkipSelf } from '@angular/core';
 import { throwIfAlreadyLoaded } from './module-import-guard';
-import { AlainThemeModule } from '@delon/theme';
-import { TitleService } from './title.service';
+
 import { MetaService } from './meta.service';
+import { MobileService } from './mobile.service';
+import { I18NService } from './i18n/service';
+import { CodeService } from './code.service';
 
 @NgModule({
-    imports: [
-        AlainThemeModule.forRoot()
-    ],
     providers: [
-        TitleService,
-        MetaService
+        I18NService,
+        MetaService,
+        MobileService,
+        CodeService
     ]
 })
 export class CoreModule {

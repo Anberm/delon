@@ -1,20 +1,27 @@
-import { Component } from '@angular/core';
-
-import 'style-loader!./app.themes.less';
+import { Component, HostBinding, OnInit } from '@angular/core';
+import { Router, NavigationEnd } from '@angular/router';
+import { SettingsService, TitleService } from '@delon/theme';
+import { filter } from 'rxjs/operators';
 
 @Component({
   selector: 'app-root',
-  template: `
-  <div style="margin: 0 auto; max-width: 80%;">
-    <div class="padding: 32px;">
-        <a routerLink="/theme">theme</a>
-        <a routerLink="/abc">abc</a>
-        <a routerLink="/acl">acl</a>
-    </div>
-    <router-outlet></router-outlet>
-  </div>
-  `
+  template: `<router-outlet></router-outlet>`
 })
-export class AppComponent {
-    constructor() {}
+export class AppComponent implements OnInit {
+
+  @HostBinding('class.layout-fixed') get isFixed() { return this.settings.layout.fixed; }
+  @HostBinding('class.layout-boxed') get isBoxed() { return this.settings.layout.boxed; }
+  @HostBinding('class.aside-collapsed') get isCollapsed() { return this.settings.layout.collapsed; }
+
+  constructor(
+    private settings: SettingsService,
+    private router: Router,
+    private titleSrv: TitleService) {
+  }
+
+  ngOnInit() {
+    this.router.events
+        .pipe(filter(evt => evt instanceof NavigationEnd))
+        .subscribe(() => this.titleSrv.setTitle());
+  }
 }
