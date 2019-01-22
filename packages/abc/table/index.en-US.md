@@ -71,6 +71,7 @@ Property | Description | Type | Default
 
 Name | Description
 ---- | -----------
+`resetColumns()` | Reset columns
 `load(pi = 1, extraParams?: any, options?: STLoadOptions)` | Load specified page
 `reload(extraParams?: any, options?: STLoadOptions)` | Refresh current page
 `reset(extraParams?: any, options?: STLoadOptions)` | Reset data and `pi` to `1`, including single multi-select, sort, filter status (Covered default state)
@@ -155,6 +156,7 @@ Property | Description | Type | Default
 `[sort]` | Parameters of type `sort` | `STChangeSort` | -
 `[filter]` | Parameters of type `filter` | `STColumn` | -
 `[click]` | Parameters of type `click` or `dblClick` | `STChangeRowClick` | -
+`[expand]` | Parameters of type `expand` | `STData` | -
 
 ### STChangeSort
 
@@ -216,7 +218,7 @@ Property | Description | Type | Default
 `[renderTitle]` | Title custom render template ID | `string` | -
 `[default]` | Replace with default value when no data exists | `string` | -
 `[buttons]` | Buttons of this column | `STColumnButton[]` | -
-`[width]` | Width of this column, e.g: `10%`、`100px` | `string` | -
+`[width]` | Width of this column (**NOTICE:** If the fixed column must be a number), e.g: `100`, `10%`, `100px` | `string,number` | -
 `[fixed]` | Set column to be fixed, must specify `width` | `left,right` | -
 `[format]` | Format value of this column | `function(cell: any, row: any)` | -
 `[className]` | Class name of this column, e.g: `text-center`, `text-right`, `text-danger`, pls refer to [Style Tools](/theme/tools) | `string` | -
@@ -232,6 +234,7 @@ Property | Description | Type | Default
 `[click]` | Callback of type is link | `(record: STData, instance?: STComponent) => void` | -
 `[badge]` | Config of type is badge | `STColumnBadge` | -
 `[tag]` | Config of type is tag | `STColumnTag` | -
+`[iif]` | Custom conditional expression<br>1. Execute only once when `columns` is assigned<br>2. Call `resetColumns()` to trigger again | `(item: STColumn) => boolean` | -
 
 ### STColumnSort
 

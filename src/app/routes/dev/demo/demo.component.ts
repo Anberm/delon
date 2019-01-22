@@ -1,21 +1,57 @@
-
-import { Component } from '@angular/core';
+import { AfterViewChecked, Component, OnInit } from '@angular/core';
 
 @Component({
   selector: 'app-demo',
   template: `
-  <form nz-form #f="ngForm" se-container="2" gutter="32">
-    <se label="App Key" error="请填写">
-      <input type="text" nz-input [(ngModel)]="i.ak" name="ak" required>
-    </se>
-    <se label="App Secret" error="请填写，最多32位">
-      <input type="text" nz-input [(ngModel)]="i.sk" name="sk" required maxlength="32">
-    </se>
-    <se>
-      <button nz-button nzType="primary" [disabled]="f.invalid">Save</button>
-    </se>
-  </form>`,
+    <g2-pie
+      [hasLegend]="true"
+      title="销售额"
+      subTitle="销售额"
+      [total]="total"
+      [valueFormat]="format"
+      [data]="salesPieData"
+      height="294"
+    ></g2-pie>
+  `,
 })
-export class DemoComponent {
-  i: any = {};
+export class DemoComponent implements OnInit, AfterViewChecked {
+  salesPieData = [
+    {
+      x: '家用电器',
+      y: 4544,
+    },
+    {
+      x: '食用酒水',
+      y: 3321,
+    },
+    {
+      x: '个护健康',
+      y: 3113,
+    },
+    {
+      x: '服饰箱包',
+      y: 2341,
+    },
+    {
+      x: '母婴产品',
+      y: 1231,
+    },
+    {
+      x: '其他',
+      y: 1231,
+    },
+  ];
+  total: string;
+  ngOnInit(): void {
+    this.total = `&yen ${this.salesPieData
+      .reduce((pre, now) => now.y + pre, 0)
+      .toFixed(2)}`;
+  }
+  format(val: number) {
+    return `&yen ${val.toFixed(2)}`;
+  }
+
+  ngAfterViewChecked(): void {
+    console.log('g2-pie view check.');
+  }
 }

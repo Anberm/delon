@@ -190,7 +190,7 @@ export interface STColumn {
   /**
    * 列宽（数字型表示 `px` 值），例如：`100`、`10%`、`100px`
    *
-   * **注意：** 固定列不支持百分比
+   * **注意：** 若固定列必须是数字
    */
   width?: string | number;
   /**
@@ -263,6 +263,12 @@ export interface STColumn {
    * - 计算规则为：`index + noIndex`
    */
   noIndex?: number;
+  /**
+   * 条件表达式
+   * - 仅赋值 `columns` 时执行一次
+   * - 可调用 `resetColumns()` 再一次触发
+   */
+  iif?: (item: STColumn) => boolean;
 
   [key: string]: any;
 }
@@ -655,7 +661,8 @@ export type STChangeType =
   | 'sort'
   | 'filter'
   | 'click'
-  | 'dblClick';
+  | 'dblClick'
+  | 'expand';
 
 /**
  * 回调数据
@@ -697,6 +704,10 @@ export interface STChange {
    * 行点击或双击参数
    */
   click?: STChangeRowClick;
+  /**
+   * `expand` 参数
+   */
+  expand?: STData;
 }
 
 /** 行单击参数 */
