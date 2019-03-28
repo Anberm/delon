@@ -1,4 +1,3 @@
-// tslint:disable:no-any
 import { HttpRequest } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 
@@ -11,9 +10,7 @@ import { JWTTokenModel } from './jwt.model';
 @Injectable()
 export class JWTInterceptor extends BaseInterceptor {
   isAuth(options: DelonAuthConfig): boolean {
-    this.model = this.injector
-      .get(DA_SERVICE_TOKEN)
-      .get<JWTTokenModel>(JWTTokenModel);
+    this.model = this.injector.get(DA_SERVICE_TOKEN).get<JWTTokenModel>(JWTTokenModel);
     return CheckJwt(this.model as JWTTokenModel, options.token_exp_offset);
   }
 

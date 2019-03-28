@@ -6,7 +6,6 @@ import {
   Component,
   ElementRef,
   EventEmitter,
-  HostBinding,
   Inject,
   Input,
   OnChanges,
@@ -27,8 +26,13 @@ const hideTitleCls = `full-content__hidden-title`;
 
 @Component({
   selector: 'full-content',
-  template: `<ng-content></ng-content>`,
-  host: { '[class.full-content]': 'true' },
+  template: `
+    <ng-content></ng-content>
+  `,
+  host: {
+    '[class.full-content]': 'true',
+    '[style.height.px]': '_height',
+  },
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class FullContentComponent implements AfterViewInit, OnInit, OnChanges, OnDestroy {
@@ -36,10 +40,11 @@ export class FullContentComponent implements AfterViewInit, OnInit, OnChanges, O
   private inited = false;
   private srv$: Subscription;
   private route$: Subscription;
-  private id = `_full-content-${Math.random().toString(36).substring(2)}`;
+  private id = `_full-content-${Math.random()
+    .toString(36)
+    .substring(2)}`;
   private scroll$: Subscription = null;
 
-  @HostBinding('style.height.px')
   _height = 0;
 
   // #region fields
@@ -56,9 +61,8 @@ export class FullContentComponent implements AfterViewInit, OnInit, OnChanges, O
     private cdr: ChangeDetectorRef,
     private srv: FullContentService,
     private router: Router,
-    // tslint:disable-next-line:no-any
     @Inject(DOCUMENT) private doc: any,
-  ) { }
+  ) {}
 
   private updateCls() {
     const clss = this.bodyEl.classList;
@@ -82,7 +86,10 @@ export class FullContentComponent implements AfterViewInit, OnInit, OnChanges, O
   }
 
   private updateHeight() {
-    this._height = this.bodyEl.getBoundingClientRect().height - (this.el.nativeElement as HTMLElement).getBoundingClientRect().top - this.padding;
+    this._height =
+      this.bodyEl.getBoundingClientRect().height -
+      (this.el.nativeElement as HTMLElement).getBoundingClientRect().top -
+      this.padding;
     this.cdr.detectChanges();
   }
 
@@ -104,9 +111,7 @@ export class FullContentComponent implements AfterViewInit, OnInit, OnChanges, O
       .subscribe(() => this.updateHeight());
 
     // when servier changed
-    this.srv$ = this.srv.change
-      .pipe(filter(res => res !== null))
-      .subscribe(() => this.toggle());
+    this.srv$ = this.srv.change.pipe(filter(res => res !== null)).subscribe(() => this.toggle());
 
     // when router changed
     this.route$ = this.router.events

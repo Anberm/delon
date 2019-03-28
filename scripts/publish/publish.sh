@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -e
+# set -u -e -o pipefail
 
 readonly thisDir=$(cd $(dirname $0); pwd)
 

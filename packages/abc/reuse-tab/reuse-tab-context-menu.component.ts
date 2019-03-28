@@ -2,7 +2,6 @@ import {
   ChangeDetectionStrategy,
   Component,
   EventEmitter,
-  HostListener,
   Input,
   OnInit,
   Output,
@@ -20,6 +19,10 @@ import {
 @Component({
   selector: 'reuse-tab-context-menu',
   templateUrl: './reuse-tab-context-menu.component.html',
+  host: {
+    '(document:click)': 'closeMenu($event)',
+    '(document:contextmenu)': 'closeMenu($event)',
+  },
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ReuseTabContextMenuComponent implements OnInit {
@@ -43,7 +46,7 @@ export class ReuseTabContextMenuComponent implements OnInit {
     return this.event.ctrlKey;
   }
 
-  constructor(private i18nSrv: DelonLocaleService) { }
+  constructor(private i18nSrv: DelonLocaleService) {}
 
   private notify(type: CloseType) {
     this.close.next({
@@ -64,7 +67,7 @@ export class ReuseTabContextMenuComponent implements OnInit {
     if (type === 'closeRight' && this.item.last) return;
 
     if (custom) {
-      if (this.isDisabled(custom)) return ;
+      if (this.isDisabled(custom)) return;
       custom.fn(this.item, custom);
     }
     this.notify(type);
@@ -74,8 +77,6 @@ export class ReuseTabContextMenuComponent implements OnInit {
     return custom.disabled ? custom.disabled(this.item) : false;
   }
 
-  @HostListener('document:click', ['$event'])
-  @HostListener('document:contextmenu', ['$event'])
   closeMenu(event: MouseEvent): void {
     if (event.type === 'click' && event.button === 2) return;
     this.notify(null);

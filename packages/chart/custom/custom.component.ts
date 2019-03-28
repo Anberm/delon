@@ -4,7 +4,6 @@ import {
   Component,
   ElementRef,
   EventEmitter,
-  HostBinding,
   Input,
   OnDestroy,
   Output,
@@ -15,16 +14,20 @@ import { debounceTime } from 'rxjs/operators';
 
 @Component({
   selector: 'g2,g2-custom',
-  template: `<ng-content></ng-content>`,
+  template: `
+    <ng-content></ng-content>
+  `,
+  host: {
+    '[style.height.px]': 'height',
+  },
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class G2CustomComponent implements AfterViewInit, OnDestroy {
-
   private resize$: Subscription = null;
 
   // #region fields
 
-  @HostBinding('style.height.px') @Input() @InputNumber() height: number;
+  @Input() @InputNumber() height: number;
   @Input() @InputNumber() resizeTime = 0;
   @Output() readonly render = new EventEmitter<ElementRef>();
   @Output() readonly resize = new EventEmitter<ElementRef>();
@@ -32,7 +35,7 @@ export class G2CustomComponent implements AfterViewInit, OnDestroy {
 
   // #endregion
 
-  constructor(private el: ElementRef) { }
+  constructor(private el: ElementRef) {}
 
   private renderChart() {
     this.el.nativeElement.innerHTML = '';

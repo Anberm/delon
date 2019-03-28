@@ -1,13 +1,11 @@
 import { Injectable } from '@angular/core';
 import { QRConfig } from './qr.config';
 
-// tslint:disable-next-line:no-any
 declare var QRious: any;
 
 @Injectable({ providedIn: 'root' })
 export class QRService {
   /** 当前qr实例 */
-  // tslint:disable-next-line:no-any
   readonly qr: any;
   /** 背景 */
   background: string;
@@ -39,17 +37,36 @@ export class QRService {
    * @param [value] 重新指定值
    */
   refresh(value?: string | {}): string {
-    this.qr.set(typeof value === 'object' ? value : {
-      background: this.background,
-      backgroundAlpha: this.backgroundAlpha,
-      foreground: this.foreground,
-      foregroundAlpha: this.foregroundAlpha,
-      level: this.level,
-      padding: this.padding,
-      size: this.size,
-      value: value || this.value,
-    });
+    const option: any =
+      typeof value === 'object'
+        ? value
+        : {
+            background: this.background,
+            backgroundAlpha: this.backgroundAlpha,
+            foreground: this.foreground,
+            foregroundAlpha: this.foregroundAlpha,
+            level: this.level,
+            padding: this.padding,
+            size: this.size,
+            value: value || this.value,
+          };
+    option.value = this.toUtf8ByteArray(option.value);
+    this.qr.set(option);
     return this.dataURL;
+  }
+
+  private toUtf8ByteArray(str: string): string {
+    str = encodeURI(str);
+    const result: number[] = [];
+    for (let i = 0; i < str.length; i++) {
+      if (str.charAt(i) !== '%') {
+        result.push(str.charCodeAt(i));
+      } else {
+        result.push(parseInt(str.substr(i + 1, 2), 16));
+        i += 2;
+      }
+    }
+    return result.map(v => String.fromCharCode(v)).join('');
   }
 
   /**

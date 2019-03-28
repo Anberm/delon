@@ -33,15 +33,10 @@ export class ObjectProperty extends PropertyGroup {
     this._propertiesId = [];
     let orderedProperties: string[];
     try {
-      orderedProperties = orderProperties(
-        Object.keys(this.schema.properties),
-        this.ui.order as string[],
-      );
+      orderedProperties = orderProperties(Object.keys(this.schema.properties), this.ui
+        .order as string[]);
     } catch (e) {
-      console.error(
-        `Invalid ${this.schema.title || 'root'} object field configuration:`,
-        e,
-      );
+      console.error(`Invalid ${this.schema.title || 'root'} object field configuration:`, e);
     }
     orderedProperties.forEach(propertyId => {
       this.properties[propertyId] = this.formPropertyFactory.createProperty(
@@ -57,7 +52,7 @@ export class ObjectProperty extends PropertyGroup {
 
   setValue(value: SFValue, onlySelf: boolean) {
     for (const propertyId in value) {
-      if (value.hasOwnProperty(propertyId)) {
+      if (value.hasOwnProperty(propertyId) && this.properties[propertyId]) {
         this.properties[propertyId].setValue(value[propertyId], true);
       }
     }
@@ -66,7 +61,6 @@ export class ObjectProperty extends PropertyGroup {
 
   resetValue(value: SFValue, onlySelf: boolean) {
     value = value || this.schema.default || {};
-    // tslint:disable-next-line:forin
     for (const propertyId in this.schema.properties) {
       this.properties[propertyId].resetValue(value[propertyId], true);
     }

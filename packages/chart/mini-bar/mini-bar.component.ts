@@ -1,9 +1,7 @@
-// tslint:disable:no-any
 import {
   ChangeDetectionStrategy,
   Component,
   ElementRef,
-  HostBinding,
   Input,
   NgZone,
   OnChanges,
@@ -23,6 +21,9 @@ export interface G2MiniBarData {
 @Component({
   selector: 'g2-mini-bar',
   template: ``,
+  host: {
+    '[style.height.px]': 'height',
+  },
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class G2MiniBarComponent implements OnInit, OnChanges, OnDestroy {
@@ -32,7 +33,7 @@ export class G2MiniBarComponent implements OnInit, OnChanges, OnDestroy {
 
   @Input() @InputNumber() delay = 0;
   @Input() color = '#1890FF';
-  @HostBinding('style.height.px') @Input() @InputNumber() height = 0;
+  @Input() @InputNumber() height = 0;
   @Input() @InputNumber() borderWidth = 5;
   @Input() padding: Array<string | number> = [8, 8, 8, 8];
   @Input() data: G2MiniBarData[] = [];
@@ -41,16 +42,16 @@ export class G2MiniBarComponent implements OnInit, OnChanges, OnDestroy {
 
   // #endregion
 
-  constructor(private el: ElementRef, private ngZone: NgZone) { }
+  constructor(private el: ElementRef, private ngZone: NgZone) {}
 
   private install() {
     const { el, height, padding, yTooltipSuffix, tooltipType } = this;
-    const chart = this.chart = new G2.Chart({
+    const chart = (this.chart = new G2.Chart({
       container: el.nativeElement,
       forceFit: true,
       height,
       padding,
-    });
+    }));
     chart.source([], {
       x: {
         type: 'cat',
@@ -62,10 +63,10 @@ export class G2MiniBarComponent implements OnInit, OnChanges, OnDestroy {
     chart.legend(false);
     chart.axis(false);
     chart.tooltip({
-      'type': tooltipType === 'mini' ? 'mini' : null,
-      'showTitle': false,
-      'hideMarkders': false,
-      'crosshairs': false,
+      type: tooltipType === 'mini' ? 'mini' : null,
+      showTitle: false,
+      hideMarkders: false,
+      crosshairs: false,
       'g2-tooltip': { padding: 4 },
       'g2-tooltip-list-item': { margin: `0px 4px` },
     });
@@ -81,8 +82,11 @@ export class G2MiniBarComponent implements OnInit, OnChanges, OnDestroy {
 
   private attachChart() {
     const { chart, height, padding, data, color, borderWidth } = this;
-    if (!chart || !data || data.length <= 0) return ;
-    chart.get('geoms')[0].size(borderWidth).color(color);
+    if (!chart || !data || data.length <= 0) return;
+    chart
+      .get('geoms')[0]
+      .size(borderWidth)
+      .color(color);
     chart.set('height', height);
     chart.set('padding', padding);
     chart.changeData(data);
@@ -98,7 +102,7 @@ export class G2MiniBarComponent implements OnInit, OnChanges, OnDestroy {
 
   ngOnDestroy(): void {
     if (this.chart) {
-      this.chart.destroy();
+      this.ngZone.runOutsideAngular(() => this.chart.destroy());
     }
   }
 }

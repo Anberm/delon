@@ -1,4 +1,3 @@
-// tslint:disable:no-any
 import {
   ChangeDetectionStrategy,
   Component,
@@ -37,7 +36,7 @@ export class G2GaugeComponent implements OnInit, OnDestroy, OnChanges {
 
   // #endregion
 
-  constructor(private el: ElementRef, private ngZone: NgZone) { }
+  constructor(private el: ElementRef, private ngZone: NgZone) {}
 
   private install() {
     const Shape = G2.Shape;
@@ -76,13 +75,13 @@ export class G2GaugeComponent implements OnInit, OnDestroy, OnChanges {
 
     const { el, height, padding, format } = this;
 
-    const chart = this.chart = new G2.Chart({
+    const chart = (this.chart = new G2.Chart({
       container: el.nativeElement,
       animate: false,
       forceFit: true,
       height,
       padding,
-    });
+    }));
     chart
       .point({ generatePoints: true })
       .position('value*1')
@@ -168,7 +167,7 @@ export class G2GaugeComponent implements OnInit, OnDestroy, OnChanges {
 
   ngOnDestroy(): void {
     if (this.chart) {
-      this.chart.destroy();
+      this.ngZone.runOutsideAngular(() => this.chart.destroy());
     }
   }
 }

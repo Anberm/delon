@@ -1,17 +1,15 @@
-import { HttpClient, HttpResponse } from '@angular/common/http';
-import {
-  Directive,
-  ElementRef,
-  EventEmitter,
-  HostListener,
-  Input,
-  Optional,
-  Output,
-} from '@angular/core';
+import { HttpResponse } from '@angular/common/http';
+import { Directive, ElementRef, EventEmitter, Input, Output } from '@angular/core';
 import { _HttpClient } from '@delon/theme';
 import { saveAs } from 'file-saver';
 
-@Directive({ selector: '[down-file]' })
+@Directive({
+  selector: '[down-file]',
+  host: {
+    '(click)': '_click()',
+  },
+  exportAs: 'downFileDirective',
+})
 export class DownFileDirective {
   /** URL请求参数 */
   @Input('http-data') httpData: {};
@@ -27,8 +25,7 @@ export class DownFileDirective {
   @Output() readonly error = new EventEmitter<{}>();
 
   private getDisposition(data: string) {
-    // tslint:disable-next-line:no-any
-    const arr: any[] = (data || '')
+    const arr: Array<{}> = (data || '')
       .split(';')
       .filter(i => i.includes('='))
       .map(v => {
@@ -41,13 +38,11 @@ export class DownFileDirective {
     return arr.reduce((o, item) => item, {});
   }
 
-  constructor(private el: ElementRef, private http: HttpClient, @Optional() private _http: _HttpClient) { }
+  constructor(private el: ElementRef, private _http: _HttpClient) {}
 
-  @HostListener('click')
   _click() {
     this.el.nativeElement.disabled = true;
-    // tslint:disable-next-line:no-any
-    ((this._http || this.http) as any)
+    this._http
       .request(this.httpMethod, this.httpUrl, {
         params: this.httpData || {},
         responseType: 'blob',
@@ -59,9 +54,7 @@ export class DownFileDirective {
             this.error.emit(res);
             return;
           }
-          const disposition = this.getDisposition(
-            res.headers.get('content-disposition'),
-          );
+          const disposition = this.getDisposition(res.headers.get('content-disposition'));
           const fileName =
             this.fileName ||
             disposition[`filename*`] ||

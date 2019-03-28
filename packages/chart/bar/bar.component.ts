@@ -1,9 +1,7 @@
-// tslint:disable:no-any
 import {
   ChangeDetectionStrategy,
   Component,
   ElementRef,
-  HostBinding,
   Input,
   NgZone,
   OnChanges,
@@ -28,11 +26,13 @@ export interface G2BarData {
 @Component({
   selector: 'g2-bar',
   templateUrl: './bar.component.html',
+  host: {
+    '[style.height.px]': 'height',
+  },
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class G2BarComponent implements OnInit, OnChanges, OnDestroy {
   private resize$: Subscription;
-  // tslint:disable-next-line:no-any
   private chart: any;
   @ViewChild('container') private node: ElementRef;
 
@@ -41,7 +41,7 @@ export class G2BarComponent implements OnInit, OnChanges, OnDestroy {
   @Input() @InputNumber() delay = 0;
   @Input() title: string | TemplateRef<void>;
   @Input() color = 'rgba(24, 144, 255, 0.85)';
-  @HostBinding('style.height.px') @Input() @InputNumber() height = 0;
+  @Input() @InputNumber() height = 0;
   @Input() padding: Array<number | string> | string = 'auto';
   @Input() data: G2BarData[] = [];
   @Input() @InputBoolean() autoLabel = true;
@@ -58,13 +58,13 @@ export class G2BarComponent implements OnInit, OnChanges, OnDestroy {
     const { node, padding } = this;
 
     const container = node.nativeElement as HTMLElement;
-    const chart = this.chart = new G2.Chart({
+    const chart = (this.chart = new G2.Chart({
       container,
       forceFit: true,
       legend: null,
       height: this.getHeight(),
       padding,
-    });
+    }));
     this.updatelabel();
     chart.axis('y', {
       title: false,
@@ -94,7 +94,7 @@ export class G2BarComponent implements OnInit, OnChanges, OnDestroy {
 
   private attachChart() {
     const { chart, padding, data, color } = this;
-    if (!chart || !data || data.length <= 0) return ;
+    if (!chart || !data || data.length <= 0) return;
     this.installResizeEvent();
     const height = this.getHeight();
     if (chart.get('height') !== height) {
@@ -122,7 +122,7 @@ export class G2BarComponent implements OnInit, OnChanges, OnDestroy {
         filter(() => this.chart),
         debounceTime(200),
       )
-      .subscribe(() =>  this.ngZone.runOutsideAngular(() => this.updatelabel()));
+      .subscribe(() => this.ngZone.runOutsideAngular(() => this.updatelabel()));
   }
 
   ngOnInit() {
@@ -138,7 +138,7 @@ export class G2BarComponent implements OnInit, OnChanges, OnDestroy {
       this.resize$.unsubscribe();
     }
     if (this.chart) {
-      this.chart.destroy();
+      this.ngZone.runOutsideAngular(() => this.chart.destroy());
     }
   }
 }

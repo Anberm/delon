@@ -1,4 +1,3 @@
-// tslint:disable:no-any
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { LazyResult, LazyService } from '@delon/util';
@@ -11,11 +10,7 @@ declare var JSZip: any;
 
 @Injectable({ providedIn: 'root' })
 export class ZipService {
-  constructor(
-    private cog: ZipConfig,
-    private http: HttpClient,
-    private lazy: LazyService,
-  ) { }
+  constructor(private cog: ZipConfig, private http: HttpClient, private lazy: LazyService) {}
 
   private init(): Promise<LazyResult[]> {
     return this.lazy.load([this.cog.url].concat(this.cog.utils));
@@ -31,16 +26,14 @@ export class ZipService {
       this.init().then(() => {
         // from url
         if (typeof fileOrUrl === 'string') {
-          this.http
-            .request('GET', fileOrUrl, { responseType: 'arraybuffer' })
-            .subscribe(
-              (res: ArrayBuffer) => {
-                JSZip.loadAsync(res, options).then(ret => resolve(ret));
-              },
-              (err: any) => {
-                reject(err);
-              },
-            );
+          this.http.request('GET', fileOrUrl, { responseType: 'arraybuffer' }).subscribe(
+            (res: ArrayBuffer) => {
+              JSZip.loadAsync(res, options).then(ret => resolve(ret));
+            },
+            (err: any) => {
+              reject(err);
+            },
+          );
           return;
         }
         // from file
@@ -94,18 +87,16 @@ export class ZipService {
     this.check(zip);
     const opt = { ...options };
     return new Promise<void>((resolve, reject) => {
-      zip
-        .generateAsync({ type: 'blob', ...opt.options }, opt.update)
-        .then(
-          (data: Blob) => {
-            if (opt.callback) opt.callback(data);
-            saveAs(data, opt.filename || 'download.zip');
-            resolve();
-          },
-          err => {
-            reject(err);
-          },
-        );
+      zip.generateAsync({ type: 'blob', ...opt.options }, opt.update).then(
+        (data: Blob) => {
+          if (opt.callback) opt.callback(data);
+          saveAs(data, opt.filename || 'download.zip');
+          resolve();
+        },
+        err => {
+          reject(err);
+        },
+      );
     });
   }
 }

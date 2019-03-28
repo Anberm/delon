@@ -92,7 +92,7 @@ Property | Description | Type | Default
 `[liveValidate]` | Whether to live validate | `boolean` | `true`
 `[autocomplete]` | autocomplete value of this form | `on,off` | `null`
 `[firstVisual]` | Whether to show visual error immediately | `boolean` | `false`
-`[onlyVisual]` | Whether only show visual error not include text | `boolean` | `false`
+`[onlyVisual]` | Whether only show visual error not include text, and cancel the error text spacing | `boolean` | `false`
 `[errors]` | Customize error messages | `{ [ key: string ]: string }` | `ERRORSDEFAULT`
 `[ui]` | Default global ui property | `SFUISchemaItem` | -
 `[size]` | Size of the all angular element | `default,large,small` | -
@@ -101,6 +101,7 @@ Property | Description | Type | Default
 `[uiDateNumberFormat]` | Date widget default format | `string` | `x`
 `[uiTimeStringFormat]` | Time widget default format | `string` | `HH:mm:ss`
 `[uiTimeNumberFormat]` | Time widget default format | `string` | `x`
+`[uiEmailSuffixes]` | Specify the default Email suffix for `format: 'email'` | `string[]` | `['qq.com', '163.com', 'gmail.com', '126.com', 'aliyun.com']`
 
 For example, Build a email and name form:
 

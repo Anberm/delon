@@ -1,57 +1,51 @@
-import { AfterViewChecked, Component, OnInit } from '@angular/core';
+import { Component } from '@angular/core';
+import { SFSchema } from '@delon/form';
+import { NzMessageService } from 'ng-zorro-antd';
+
+const r = (min: number, max: number) => Math.floor(Math.random() * (max - min + 1) + min);
 
 @Component({
   selector: 'app-demo',
   template: `
-    <g2-pie
-      [hasLegend]="true"
-      title="销售额"
-      subTitle="销售额"
-      [total]="total"
-      [valueFormat]="format"
-      [data]="salesPieData"
-      height="294"
-    ></g2-pie>
+  <div style="width: 200px; display: inline-block">
+      <g2-pie
+          [percent]="percent"
+          subTitle="中式快餐"
+          total="28%"
+          height="130"></g2-pie>
+  </div>
+  <button nz-button (click)="change()">change</button>
   `,
 })
-export class DemoComponent implements OnInit, AfterViewChecked {
-  salesPieData = [
-    {
-      x: '家用电器',
-      y: 4544,
-    },
-    {
-      x: '食用酒水',
-      y: 3321,
-    },
-    {
-      x: '个护健康',
-      y: 3113,
-    },
-    {
-      x: '服饰箱包',
-      y: 2341,
-    },
-    {
-      x: '母婴产品',
-      y: 1231,
-    },
-    {
-      x: '其他',
-      y: 1231,
-    },
-  ];
-  total: string;
-  ngOnInit(): void {
-    this.total = `&yen ${this.salesPieData
-      .reduce((pre, now) => now.y + pre, 0)
-      .toFixed(2)}`;
-  }
-  format(val: number) {
-    return `&yen ${val.toFixed(2)}`;
+export class DemoComponent  {
+  percent = 0;
+  change() {
+    this.percent = r(0, 100);
   }
 
-  ngAfterViewChecked(): void {
-    console.log('g2-pie view check.');
-  }
+  // @delon/form
+  schema: SFSchema = {
+    definitions: {
+      nameRef: {
+        type: 'string',
+        title: 'nameRef',
+      },
+    },
+    properties: {
+      name: {
+        type: 'string',
+        title: 'Name',
+        ui: {
+          addOnAfter: 'RMB',
+          placeholder: 'RMB结算',
+        },
+      },
+      nameTwo: {
+        '$ref': '#/definitions/nameRef',
+      },
+    },
+    required: ['name', 'nameTwo'],
+  };
+  constructor(public msg: NzMessageService) { }
+  submit(value: any) { this.msg.success(JSON.stringify(value)); }
 }

@@ -1,37 +1,61 @@
 import { Component, DebugElement } from '@angular/core';
-import { fakeAsync, tick, ComponentFixture, TestBed } from '@angular/core/testing';
+import { fakeAsync, tick, ComponentFixture, TestBed, TestBedStatic } from '@angular/core/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { configureTestSuite, createTestContext } from '@delon/testing';
-import { AlainThemeModule } from '@delon/theme';
+import { en_US, AlainThemeModule, DelonLocaleService } from '@delon/theme';
 import { deepCopy } from '@delon/util';
+import { of } from 'rxjs';
+import { FormProperty } from '../src/model/form.property';
+import { FormPropertyFactory } from '../src/model/form.property.factory';
 import { DelonFormModule } from '../src/module';
 import { SFSchema } from '../src/schema/index';
 import { SCHEMA, SFPage, TestFormComponent } from './base.spec';
 
 describe('form: component', () => {
+  let injector: TestBedStatic;
   let fixture: ComponentFixture<TestFormComponent>;
   let dl: DebugElement;
   let context: TestFormComponent;
   let page: SFPage;
 
   configureTestSuite(() => {
-    TestBed.configureTestingModule({
+    injector = TestBed.configureTestingModule({
       imports: [NoopAnimationsModule, AlainThemeModule.forRoot(), DelonFormModule.forRoot()],
       declarations: [TestFormComponent, TestModeComponent],
     });
   });
 
+  function createComp() {
+    fixture.detectChanges();
+    page = new SFPage(context.comp);
+    page.prop(dl, context, fixture);
+  }
+
   describe('', () => {
     beforeEach(() => {
       ({ fixture, dl, context } = createTestContext(TestFormComponent));
-      fixture.detectChanges();
-      page = new SFPage(context.comp);
-      page.prop(dl, context, fixture);
+      createComp();
     });
 
     describe('[default]', () => {
-      it('should be create a form', () => {
-        expect(context).not.toBeUndefined();
+      it('should throw error when parent is not object or array', () => {
+        expect(() => {
+          const factory = dl.injector.get(FormPropertyFactory);
+          factory.createProperty({}, {}, {}, { type: 'invalid', path: 'a' } as any, 'a');
+        }).toThrowError();
+      });
+
+      it('should throw error when type is invalid', () => {
+        expect(() => {
+          context.schema = {
+            properties: {
+              a: {
+                type: 'aa' as any,
+              },
+            },
+          };
+          fixture.detectChanges();
+        }).toThrowError(`Undefined type aa`);
       });
 
       it('should throw error when is invalid schema', () => {
@@ -82,6 +106,26 @@ describe('form: component', () => {
         page.setValue('/name', 'a');
         expect(console.warn).toHaveBeenCalled();
       });
+
+      it('should be console debug informations when ajv throw error', () => {
+        spyOn(console, 'warn');
+        expect(console.warn).not.toHaveBeenCalled();
+        context.schema = {
+          properties: {
+            time: {
+              type: 'string',
+              ui: { widget: 'date', mode: 'range' },
+              title: 'Date',
+              format: 'YYYY-MM-DD HH:mm:ss',
+            },
+          },
+          ui: {
+            debug: true,
+          },
+        };
+        fixture.detectChanges();
+        expect(console.warn).toHaveBeenCalled();
+      });
     });
 
     describe('[button]', () => {
@@ -116,11 +160,7 @@ describe('form: component', () => {
                 },
               },
             })
-            .checkStyle(
-              '.sf-btns .ant-form-item-control-wrapper',
-              'margin-left',
-              '100px',
-            );
+            .checkStyle('.sf-btns .ant-form-item-control-wrapper', 'margin-left', '100px');
         });
         it('should be specified grid', () => {
           const span = 11;
@@ -130,10 +170,7 @@ describe('form: component', () => {
             },
           };
           fixture.detectChanges();
-          page.checkCls(
-            '.sf-btns .ant-form-item-control-wrapper',
-            `ant-col-${span}`,
-          );
+          page.checkCls('.sf-btns .ant-form-item-control-wrapper', `ant-col-${span}`);
         });
         it('should be fixed label', () => {
           const spanLabelFixed = 56;
@@ -162,15 +199,20 @@ describe('form: component', () => {
           page.checkCount('.ant-btn-lg', 2);
         });
       });
+      it('should be update button text when i18n changed', () => {
+        page.checkElText('.ant-btn-primary', '提交');
+        const i18n = injector.get(DelonLocaleService) as DelonLocaleService;
+        i18n.setLocale(en_US);
+        fixture.detectChanges();
+        page.checkElText('.ant-btn-primary', 'Submit');
+      });
     });
 
     describe('properites', () => {
       describe('#validate', () => {
         it('should be validate when submitted and not liveValidate', () => {
           page.submit(false);
-          expect(
-            (page.getEl('.ant-btn-primary') as HTMLButtonElement).disabled,
-          ).toBe(true);
+          expect((page.getEl('.ant-btn-primary') as HTMLButtonElement).disabled).toBe(true);
           context.liveValidate = false;
           fixture.detectChanges();
           page
@@ -268,6 +310,21 @@ describe('form: component', () => {
         });
       });
 
+      describe('#onlyVisual', () => {
+        it('with false', () => {
+          context.onlyVisual = false;
+          fixture.detectChanges();
+          page.checkCount('.sf__no-error', 0);
+          page.checkCount('nz-form-explain', 2);
+        });
+        it('with true', () => {
+          context.onlyVisual = true;
+          fixture.detectChanges();
+          page.checkCount('.sf__no-error', 1);
+          page.checkCount('nz-form-explain', 0);
+        });
+      });
+
       it('#formChange', () => {
         page.setValue('/name', 'cipchk');
         expect(context.formChange).toHaveBeenCalled();
@@ -340,23 +397,145 @@ describe('form: component', () => {
         }).toThrow();
       });
     });
+
+    describe('[Custom Validator]', () => {
+      it('with function and shoule be success when return a empty errors', () => {
+        const s: SFSchema = {
+          properties: {
+            a: {
+              type: 'string',
+              ui: {
+                validator: jasmine
+                  .createSpy()
+                  .and.returnValue([{ keyword: 'required', message: 'a' }]),
+              },
+            },
+          },
+        };
+        page.newSchema(s);
+        expect(page.getProperty('/a').valid).toBe(false);
+      });
+      it('with function', () => {
+        const s: SFSchema = {
+          properties: {
+            a: {
+              type: 'string',
+              ui: {
+                validator: jasmine
+                  .createSpy()
+                  .and.returnValue([]),
+              },
+            },
+          },
+        };
+        page.newSchema(s);
+        expect(page.getProperty('/a').valid).toBe(true);
+      });
+      it('with observable', () => {
+        const s: SFSchema = {
+          properties: {
+            a: {
+              type: 'string',
+              ui: {
+                validator: jasmine
+                  .createSpy()
+                  .and.returnValue(of([{ keyword: 'required', message: 'a' }])),
+              },
+            },
+          },
+        };
+        page.newSchema(s);
+        expect(page.getProperty('/a').valid).toBe(false);
+      });
+      it('shoule be throw error when non-include a message property', () => {
+        expect(() => {
+          const s: SFSchema = {
+            properties: {
+              a: {
+                type: 'string',
+                ui: {
+                  validator: jasmine
+                    .createSpy()
+                    .and.returnValue([{ keyword: 'required' }]),
+                },
+              },
+            },
+          };
+          page.newSchema(s);
+        }).toThrowError();
+      });
+      it('shoule be support custom params in message', () => {
+        const s: SFSchema = {
+          properties: {
+            a: {
+              type: 'string',
+              ui: {
+                validator: () => [{
+                  keyword: 'a',
+                  message: 'a-{id}-{invalid}',
+                  params: {
+                    id: 10,
+                  },
+                }],
+              },
+            },
+          },
+        };
+        page.newSchema(s);
+        expect(page.getProperty('/a').errors[0].message).toBe(`a-10-`);
+      });
+    });
+
+    describe('[Custom Show Errors]', () => {
+      it('shoule be re-error message via error property', () => {
+        const s: SFSchema = {
+          properties: {
+            a: {
+              type: 'string',
+              ui: {
+                errors: {
+                  required: 'REQUEST',
+                },
+              },
+            },
+          },
+          required: ['a'],
+        };
+        page.newSchema(s);
+        expect(page.getProperty('/a').errors[0].message).toBe('REQUEST');
+      });
+
+      it('shoule be re-error message via error property and type is function', () => {
+        const s: SFSchema = {
+          properties: {
+            a: {
+              type: 'string',
+              ui: {
+                errors: {
+                  required: jasmine.createSpy().and.returnValue('A'),
+                },
+              },
+            },
+          },
+          required: ['a'],
+        };
+        page.newSchema(s);
+        expect(page.getProperty('/a').errors[0].message).toBe('A');
+        expect((s.properties.a.ui as any).errors.required).toHaveBeenCalled();
+      });
+    });
   });
 
   describe('#mode', () => {
-    beforeEach(() => {
-      ({ fixture, dl, context } = createTestContext(TestModeComponent));
-      fixture.detectChanges();
-      page = new SFPage(context.comp);
-      page.prop(dl, context, fixture);
-    });
+    beforeEach(() => ({ fixture, dl, context } = createTestContext(TestModeComponent)));
     it('should be auto 搜索 in submit', () => {
       context.mode = 'search';
-      fixture.detectChanges();
+      createComp();
       expect(page.getEl('.ant-btn-primary').textContent).toBe('搜索');
     });
     it('should be auto 保存 in submit', () => {
       context.mode = 'edit';
-      fixture.detectChanges();
+      createComp();
       expect(page.getEl('.ant-btn-primary').textContent).toBe('保存');
     });
     it('should be custom text of search', () => {
@@ -364,7 +543,7 @@ describe('form: component', () => {
       context.button = {
         search: 'SEARCH',
       };
-      fixture.detectChanges();
+      createComp();
       expect(page.getEl('.ant-btn-primary').textContent).toBe('SEARCH');
     });
     it('should be custom text of edit', () => {
@@ -372,14 +551,15 @@ describe('form: component', () => {
       context.button = {
         edit: 'SAVE',
       };
-      fixture.detectChanges();
+      createComp();
       expect(page.getEl('.ant-btn-primary').textContent).toBe('SAVE');
     });
   });
-
 });
 
 @Component({
-  template: `<sf [layout]="layout" #comp [schema]="schema" [ui]="ui" [button]="button" [mode]="mode"></sf>`,
+  template: `
+    <sf [layout]="layout" #comp [schema]="schema" [ui]="ui" [button]="button" [mode]="mode"></sf>
+  `,
 })
 class TestModeComponent extends TestFormComponent {}

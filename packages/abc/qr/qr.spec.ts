@@ -62,24 +62,31 @@ describe('abc: qr', () => {
         srv.refresh();
         expect(getDataURL().length).toBeGreaterThan(1);
       });
+      it('should be support unicode value', () => {
+        srv.refresh('中国🇨🇳');
+        const res = srv.dataURL.startsWith(`data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAANwAAADcCAYAAAAbWs+BAAAOoElEQVR4Xu2d0XIjVw5Dx///0d4qT7aiSdLSoRoXui2dvIYGQRBotmTv5uv7+/v7l/`);
+        expect(res).toBe(true);
+      });
     });
   });
 });
 
 @Component({
   template: `
-  <qr #comp
-    [value]="value"
-    [background]="background"
-    [backgroundAlpha]="backgroundAlpha"
-    [foreground]="foreground"
-    [foregroundAlpha]="foregroundAlpha"
-    [level]="level"
-    [mime]="mime"
-    [padding]="padding"
-    [size]="size"
-    (change)="change($event)"></qr>
-    `,
+    <qr
+      #comp
+      [value]="value"
+      [background]="background"
+      [backgroundAlpha]="backgroundAlpha"
+      [foreground]="foreground"
+      [foregroundAlpha]="foregroundAlpha"
+      [level]="level"
+      [mime]="mime"
+      [padding]="padding"
+      [size]="size"
+      (change)="change($event)"
+    ></qr>
+  `,
 })
 class TestComponent {
   @ViewChild('comp')

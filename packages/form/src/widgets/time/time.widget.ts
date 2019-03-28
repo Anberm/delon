@@ -6,45 +6,17 @@ import { ControlWidget } from '../../widget';
 
 @Component({
   selector: 'sf-time',
-  template: `
-  <sf-item-wrap [id]="id" [schema]="schema" [ui]="ui" [showError]="showError" [error]="error" [showTitle]="schema.title">
-
-    <nz-time-picker
-      [(ngModel)]="displayValue"
-      (ngModelChange)="_change($event)"
-      [nzDisabled]="disabled"
-      [nzSize]="ui.size"
-      [nzFormat]="i.displayFormat"
-      [nzAllowEmpty]="i.allowEmpty"
-      [nzClearText]="i.clearText"
-      [nzDefaultOpenValue]="i.defaultOpenValue"
-      [nzDisabledHours]="ui.disabledHours"
-      [nzDisabledMinutes]="ui.disabledMinutes"
-      [nzDisabledSeconds]="ui.disabledSeconds"
-      [nzHideDisabledOptions]="i.hideDisabledOptions"
-      [nzHourStep]="i.hourStep"
-      [nzMinuteStep]="i.minuteStep"
-      [nzSecondStep]="i.secondStep"
-      [nzPopupClassName]="ui.popupClassName"
-      >
-    </nz-time-picker>
-
-  </sf-item-wrap>
-  `,
+  templateUrl: './time.widget.html',
 })
 export class TimeWidget extends ControlWidget implements OnInit {
   displayValue: Date = null;
   format: string;
-  // tslint:disable-next-line:no-any
   i: any;
 
   ngOnInit(): void {
     const ui = this.ui;
-    this.format = ui.format
-      ? ui.format
-      : this.schema.type === 'number'
-        ? 'x'
-        : 'HH:mm:ss';
+    // 构建属性对象时会对默认值进行校验，因此可以直接使用 format 作为格式化属性
+    this.format = ui.format;
     this.i = {
       displayFormat: ui.displayFormat || 'HH:mm:ss',
       allowEmpty: toBool(ui.allowEmpty, true),
@@ -72,7 +44,9 @@ export class TimeWidget extends ControlWidget implements OnInit {
 
     // trying restore full Date format
     if (v != null && v.toString() === 'Invalid Date') {
-      if (value.toString().split(':').length <= 1) value += ':00';
+      if (value.toString().split(':').length <= 1) {
+        value += ':00';
+      }
       v = new Date(`1970-1-1 ` + value);
     }
     this.displayValue = v;

@@ -1,4 +1,3 @@
-// tslint:disable:no-any
 import {
   ChangeDetectionStrategy,
   ChangeDetectorRef,
@@ -138,6 +137,7 @@ export class G2PieComponent implements OnInit, OnDestroy, OnChanges {
       .position('y')
       .tooltip('x*percent', (name, p) => ({
         name,
+        // 由于 hasLegend 会优先处理为百分比格式，因此无需要在 tooltip 中重新转换
         value: hasLegend ? p : (p * 100).toFixed(2),
       }))
       .select(this.select);
@@ -181,9 +181,6 @@ export class G2PieComponent implements OnInit, OnDestroy, OnChanges {
       x: {
         type: 'cat',
         range: [0, 1],
-      },
-      y: {
-        min: 0,
       },
     });
     chart.repaint();
@@ -239,7 +236,7 @@ export class G2PieComponent implements OnInit, OnDestroy, OnChanges {
       this.resize$.unsubscribe();
     }
     if (this.chart) {
-      this.chart.destroy();
+      this.ngZone.runOutsideAngular(() => this.chart.destroy());
     }
   }
 }

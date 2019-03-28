@@ -1,17 +1,13 @@
-import {
-  SchematicTestRunner,
-  UnitTestTree,
-} from '@angular-devkit/schematics/testing';
+import { SchematicTestRunner, UnitTestTree } from '@angular-devkit/schematics/testing';
 import { createAlainAndModuleApp } from '../utils/testing';
-import { Schema as NgAddOptions } from './schema';
 
 describe('Schematic: list', () => {
   let runner: SchematicTestRunner;
   let tree: UnitTestTree;
-  const modulePath = '/foo/src/app/routes/trade/trade.module.ts';
-  const routingPath = '/foo/src/app/routes/trade/trade-routing.module.ts';
-  const tsPath = '/foo/src/app/routes/trade/list/list.component.ts';
-  const htmlPath = '/foo/src/app/routes/trade/list/list.component.html';
+  const modulePath = '/projects/foo/src/app/routes/trade/trade.module.ts';
+  const routingPath = '/projects/foo/src/app/routes/trade/trade-routing.module.ts';
+  const tsPath = '/projects/foo/src/app/routes/trade/list/list.component.ts';
+  const htmlPath = '/projects/foo/src/app/routes/trade/list/list.component.html';
 
   beforeEach(() => {
     ({ runner, tree } = createAlainAndModuleApp());
@@ -25,7 +21,9 @@ describe('Schematic: list', () => {
   });
 
   it('should be has import code', () => {
-    expect(tree.readContent(modulePath)).toContain(`import { TradeListComponent } from './list/list.component';`);
+    expect(tree.readContent(modulePath)).toContain(
+      `import { TradeListComponent } from './list/list.component';`,
+    );
   });
 
   it('should be include module name in component name', () => {
@@ -37,7 +35,13 @@ describe('Schematic: list', () => {
   });
 
   it('should be support targets (like: list/edit)', () => {
-    tree = runner.runSchematic('list', { name: 'list2', module: 'trade', target: 'list/edit' }, tree);
-    expect(tree.exists(`/foo/src/app/routes/trade/list/edit/list2/list2.component.html`)).toBe(true);
+    tree = runner.runSchematic(
+      'list',
+      { name: 'list2', module: 'trade', target: 'list/edit' },
+      tree,
+    );
+    expect(tree.exists(`/projects/foo/src/app/routes/trade/list/edit/list2/list2.component.html`)).toBe(
+      true,
+    );
   });
 });

@@ -24,7 +24,6 @@ import { getSourceFile } from './ast';
 import { getProject, Project } from './project';
 
 export interface CommonSchema {
-  // tslint:disable-next-line:no-any
   [key: string]: any;
   _filesPath?: string;
   name?: string;
@@ -83,9 +82,7 @@ function resolveSchema(host: Tree, project: Project, schema: CommonSchema) {
   }
   // path
   if (schema.path === undefined) {
-    const projectDirName =
-      project.projectType === 'application' ? 'app' : 'lib';
-    // tslint:disable-next-line:no-any
+    const projectDirName = project.projectType === 'application' ? 'app' : 'lib';
     schema.path = `/${(project as any).sourceRoot}/${projectDirName}/routes`;
   }
 
@@ -94,59 +91,36 @@ function resolveSchema(host: Tree, project: Project, schema: CommonSchema) {
   const parsedPath = parseName(schema.path, schema.name);
   schema.name = parsedPath.name;
   schema.path = parsedPath.path;
-  // tslint:disable-next-line:no-any
   schema.importModulePath = findModuleFromOptions(host, schema as any);
   // fill target
   if (schema.target) {
     schema.path += '/' + schema.target;
   }
 
-  schema.routerModulePath = schema.importModulePath.replace(
-    '.module.ts',
-    '-routing.module.ts',
-  );
+  schema.routerModulePath = schema.importModulePath.replace('.module.ts', '-routing.module.ts');
 
   // html selector
   schema.selector =
-    // tslint:disable-next-line:no-any
     schema.selector || buildSelector(schema, (project as any).prefix);
 
   validateName(schema.name);
   validateHtmlSelector(schema.selector);
 }
 
-function addImportToModule(
-  host: Tree,
-  path: string,
-  symbolName: string,
-  fileName: string,
-) {
+function addImportToModule(host: Tree, path: string, symbolName: string, fileName: string) {
   const source = getSourceFile(host, path);
-  const change = insertImport(
-    source,
-    path,
-    symbolName,
-    fileName,
-  ) as InsertChange;
+  const change = insertImport(source, path, symbolName, fileName) as InsertChange;
   const declarationRecorder = host.beginUpdate(path);
   declarationRecorder.insertLeft(change.pos, change.toAdd);
   host.commitUpdate(declarationRecorder);
 }
 
-export function addValueToVariable(
-  host: Tree,
-  path: string,
-  variableName: string,
-  text: string,
-) {
+export function addValueToVariable(host: Tree, path: string, variableName: string, text: string) {
   const source = getSourceFile(host, path);
   const node = findNode(source, ts.SyntaxKind.Identifier, variableName);
   if (!node) {
-    throw new SchematicsException(
-      `Could not find any [${variableName}] variable.`,
-    );
+    throw new SchematicsException(`Could not find any [${variableName}] variable.`);
   }
-  // tslint:disable-next-line:no-any
   const arr = (node.parent as any).initializer as ts.ArrayLiteralExpression;
 
   const change = new InsertChange(
@@ -161,8 +135,9 @@ export function addValueToVariable(
 }
 
 function getRelativePath(path: string, schema: CommonSchema) {
-  // tslint:disable-next-line:prefer-template
-  const importPath = `/${schema.path}/` + (schema.flat ? '' : strings.dasherize(schema.name) + '/') + strings.dasherize(schema.name) + '.component';
+  const importPath = `/${schema.path}/${
+    schema.flat ? '' : strings.dasherize(schema.name) + '/'
+  }${strings.dasherize(schema.name)}.component`;
   return buildRelativePath(path, importPath);
 }
 
@@ -182,19 +157,9 @@ function addDeclaration(schema: CommonSchema) {
 
     // component
     if (schema.modal === true) {
-      addValueToVariable(
-        host,
-        schema.importModulePath,
-        'COMPONENTS_NOROUNT',
-        schema.componentName,
-      );
+      addValueToVariable(host, schema.importModulePath, 'COMPONENTS_NOROUNT', schema.componentName);
     } else {
-      addValueToVariable(
-        host,
-        schema.importModulePath,
-        'COMPONENTS',
-        schema.componentName,
-      );
+      addValueToVariable(host, schema.importModulePath, 'COMPONENTS', schema.componentName);
       // routing
       addImportToModule(
         host,
@@ -220,7 +185,6 @@ export function buildAlain(schema: CommonSchema): Rule {
 
     resolveSchema(host, project, schema);
 
-    // tslint:disable-next-line:no-any
     schema.componentName = buildComponentName(schema, (project as any).prefix);
 
     // Don't support inline
@@ -229,9 +193,7 @@ export function buildAlain(schema: CommonSchema): Rule {
     const templateSource = apply(url(schema._filesPath), [
       filter(path => !path.endsWith('.DS_Store')),
       schema.spec ? noop() : filter(path => !path.endsWith('.spec.ts')),
-      schema.inlineStyle
-        ? filter(path => !path.endsWith('.__styleext__'))
-        : noop(),
+      schema.inlineStyle ? filter(path => !path.endsWith('.__styleext__')) : noop(),
       schema.inlineTemplate ? filter(path => !path.endsWith('.html')) : noop(),
       template({
         ...strings,
@@ -241,11 +203,10 @@ export function buildAlain(schema: CommonSchema): Rule {
       move(null, schema.path + '/'),
     ]);
 
-    return chain([
-      branchAndMerge(
-        chain([addDeclaration(schema), mergeWith(templateSource)]),
-      ),
-    ])(host, context);
+    return chain([branchAndMerge(chain([addDeclaration(schema), mergeWith(templateSource)]))])(
+      host,
+      context,
+    );
   };
 }
 

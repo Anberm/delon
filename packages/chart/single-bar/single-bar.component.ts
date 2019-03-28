@@ -1,9 +1,7 @@
-// tslint:disable:no-any
 import {
   ChangeDetectionStrategy,
   Component,
   ElementRef,
-  HostBinding,
   Input,
   NgZone,
   OnChanges,
@@ -17,6 +15,9 @@ declare var G2: any;
 @Component({
   selector: 'g2-single-bar',
   template: ``,
+  host: {
+    '[style.height.px]': 'height',
+  },
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class G2SingleBarComponent implements OnInit, OnChanges, OnDestroy {
@@ -27,7 +28,7 @@ export class G2SingleBarComponent implements OnInit, OnChanges, OnDestroy {
   @Input() @InputNumber() delay = 0;
   @Input() plusColor = '#40a9ff';
   @Input() minusColor = '#ff4d4f';
-  @HostBinding('style.height.px') @Input() @InputNumber() height = 60;
+  @Input() @InputNumber() height = 60;
   @Input() @InputNumber() barSize = 30;
   @Input() @InputNumber() min = 0;
   @Input() @InputNumber() max = 100;
@@ -39,21 +40,20 @@ export class G2SingleBarComponent implements OnInit, OnChanges, OnDestroy {
 
   // #endregion
 
-  constructor(private el: ElementRef, private ngZone: NgZone) { }
+  constructor(private el: ElementRef, private ngZone: NgZone) {}
 
   private install() {
     const { el, height, padding, textStyle, line, format } = this;
-    const chart = this.chart = new G2.Chart({
+    const chart = (this.chart = new G2.Chart({
       container: el.nativeElement,
       forceFit: true,
       height,
       padding,
-    });
+    }));
     chart.legend(false);
     chart.axis(false);
     chart.tooltip({ type: 'mini' });
-    chart.coord()
-         .transpose();
+    chart.coord().transpose();
     chart
       .interval()
       .position('1*value')
@@ -91,7 +91,7 @@ export class G2SingleBarComponent implements OnInit, OnChanges, OnDestroy {
     chart.set('padding', padding);
     chart
       .get('geoms')[0]
-      .color('value', val => val > 0 ? plusColor : minusColor)
+      .color('value', val => (val > 0 ? plusColor : minusColor))
       .size(barSize);
     chart.repaint();
   }
@@ -106,7 +106,7 @@ export class G2SingleBarComponent implements OnInit, OnChanges, OnDestroy {
 
   ngOnDestroy(): void {
     if (this.chart) {
-      this.chart.destroy();
+      this.ngZone.runOutsideAngular(() => this.chart.destroy());
     }
   }
 }

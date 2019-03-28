@@ -8,20 +8,11 @@ import { SFSchemaEnum } from '../../schema';
 import { getCopyEnum, getEnum, toBool } from '../../utils';
 import { ControlWidget } from '../../widget';
 
-export const EMAILSUFFIX = [
-  'qq.com',
-  '163.com',
-  'gmail.com',
-  '126.com',
-  'aliyun.com',
-];
-
 @Component({
   selector: 'sf-autocomplete',
   templateUrl: './autocomplete.widget.html',
 })
 export class AutoCompleteWidget extends ControlWidget implements AfterViewInit {
-  // tslint:disable-next-line:no-any
   i: any = {};
   fixData: SFSchemaEnum[] = [];
   list: Observable<SFSchemaEnum[]>;
@@ -55,16 +46,17 @@ export class AutoCompleteWidget extends ControlWidget implements AfterViewInit {
     this.list = this.ngModel.valueChanges.pipe(
       debounceTime(time),
       startWith(''),
-      flatMap(input => this.isAsync ? this.ui.asyncData(input) : this.filterData(input)),
+      flatMap(input => (this.isAsync ? this.ui.asyncData(input) : this.filterData(input))),
       map(res => getEnum(res, null, this.schema.readOnly)),
     );
   }
 
   reset(value: SFValue) {
+    this.typing = this.value;
     if (this.isAsync) return;
     switch (this.ui.type) {
       case 'email':
-        this.fixData = getCopyEnum(EMAILSUFFIX, null, this.schema.readOnly);
+        this.fixData = getCopyEnum(this.schema.enum || this.formProperty.options.uiEmailSuffixes, null, this.schema.readOnly);
         break;
       default:
         this.fixData = getCopyEnum(
@@ -81,17 +73,13 @@ export class AutoCompleteWidget extends ControlWidget implements AfterViewInit {
       case 'email':
         return this.addEmailSuffix(input);
       default:
-        return of(
-          this.fixData.filter(option => this.filterOption(input, option)),
-        );
+        return of(this.fixData.filter(option => this.filterOption(input, option)));
     }
   }
 
   private addEmailSuffix(value: string) {
     return of(
-      !value || ~value.indexOf('@')
-        ? []
-        : this.fixData.map(domain => `${value}@${domain.label}`),
+      !value || ~value.indexOf('@') ? [] : this.fixData.map(domain => `${value}@${domain.label}`),
     );
   }
 }

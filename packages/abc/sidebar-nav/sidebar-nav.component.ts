@@ -4,9 +4,9 @@ import {
   ChangeDetectorRef,
   Component,
   EventEmitter,
-  HostListener,
   Inject,
   Input,
+  NgZone,
   OnDestroy,
   OnInit,
   Output,
@@ -27,18 +27,22 @@ const FLOATINGCLS = 'sidebar-nav__floating';
 @Component({
   selector: 'sidebar-nav',
   templateUrl: './sidebar-nav.component.html',
+  host: {
+    '(click)': '_click()',
+    '(document:click)': '_docClick()',
+  },
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SidebarNavComponent implements OnInit, OnDestroy {
   private bodyEl: HTMLBodyElement;
   private unsubscribe$ = new Subject<void>();
-  /** @inner */
-  floatingEl: HTMLDivElement;
+  private floatingEl: HTMLDivElement;
   list: Nav[] = [];
 
   @Input() @InputBoolean() disabledAcl = false;
   @Input() @InputBoolean() autoCloseUnderPad = true;
   @Input() @InputBoolean() recursivePath = true;
+  @Input() @InputBoolean() openStrictly = false;
   @Output() readonly select = new EventEmitter<Menu>();
 
   get collapsed() {
@@ -55,7 +59,7 @@ export class SidebarNavComponent implements OnInit, OnDestroy {
     private router: Router,
     private render: Renderer2,
     private cdr: ChangeDetectorRef,
-    // tslint:disable-next-line:no-any
+    private ngZone: NgZone,
     @Inject(DOCUMENT) private doc: any,
     @Inject(WINDOW) private win: Window,
   ) {}
@@ -81,10 +85,7 @@ export class SidebarNavComponent implements OnInit, OnDestroy {
 
   private clearFloatingContainer() {
     if (!this.floatingEl) return;
-    this.floatingEl.removeEventListener(
-      'click',
-      this.floatingAreaClickHandle.bind(this),
-    );
+    this.floatingEl.removeEventListener('click', this.floatingAreaClickHandle.bind(this));
     // fix ie: https://github.com/ng-alain/delon/issues/52
     if (this.floatingEl.hasOwnProperty('remove')) {
       this.floatingEl.remove();
@@ -97,19 +98,13 @@ export class SidebarNavComponent implements OnInit, OnDestroy {
     this.clearFloatingContainer();
     this.floatingEl = this.render.createElement('div');
     this.floatingEl.classList.add(FLOATINGCLS + '-container');
-    this.floatingEl.addEventListener(
-      'click',
-      this.floatingAreaClickHandle.bind(this),
-      false,
-    );
+    this.floatingEl.addEventListener('click', this.floatingAreaClickHandle.bind(this), false);
     this.bodyEl.appendChild(this.floatingEl);
   }
 
   private genSubNode(linkNode: HTMLLinkElement, item: Nav): HTMLUListElement {
     const id = `_sidebar-nav-${item.__id}`;
-    const node = linkNode.nextElementSibling.cloneNode(
-      true,
-    ) as HTMLUListElement;
+    const node = linkNode.nextElementSibling.cloneNode(true) as HTMLUListElement;
     node.id = id;
     node.classList.add(FLOATINGCLS);
     node.addEventListener(
@@ -135,14 +130,8 @@ export class SidebarNavComponent implements OnInit, OnDestroy {
   private calPos(linkNode: HTMLLinkElement, node: HTMLUListElement) {
     const rect = linkNode.getBoundingClientRect();
     // bug: https://developer.microsoft.com/en-us/microsoft-edge/platform/issues/14721015/
-    const scrollTop = Math.max(
-      this.doc.documentElement.scrollTop,
-      this.bodyEl.scrollTop,
-    );
-    const docHeight = Math.max(
-      this.doc.documentElement.clientHeight,
-      this.bodyEl.clientHeight,
-    );
+    const scrollTop = Math.max(this.doc.documentElement.scrollTop, this.bodyEl.scrollTop);
+    const docHeight = Math.max(this.doc.documentElement.clientHeight, this.bodyEl.clientHeight);
     let offsetHeight = 0;
     if (docHeight < rect.top + node.clientHeight) {
       offsetHeight = rect.top + node.clientHeight - docHeight;
@@ -155,18 +144,20 @@ export class SidebarNavComponent implements OnInit, OnDestroy {
     if (this.collapsed !== true) {
       return;
     }
-    e.preventDefault();
-    const linkNode = e.target as Element;
-    this.genFloatingContainer();
-    const subNode = this.genSubNode(linkNode as HTMLLinkElement, item);
-    this.hideAll();
-    subNode.classList.add(SHOWCLS);
-    this.calPos(linkNode as HTMLLinkElement, subNode);
+    this.ngZone.runOutsideAngular(() => {
+      e.preventDefault();
+      const linkNode = e.target as Element;
+      this.genFloatingContainer();
+      const subNode = this.genSubNode(linkNode as HTMLLinkElement, item);
+      this.hideAll();
+      subNode.classList.add(SHOWCLS);
+      this.calPos(linkNode as HTMLLinkElement, subNode);
+    });
   }
 
   to(item: Menu) {
     this.select.emit(item);
-    if (item.disabled) return ;
+    if (item.disabled) return;
 
     if (item.externalLink) {
       if (item.target === '_blank') {
@@ -176,23 +167,24 @@ export class SidebarNavComponent implements OnInit, OnDestroy {
       }
       return false;
     }
-    this.router.navigateByUrl(item.link);
+    this.ngZone.run(() => this.router.navigateByUrl(item.link));
   }
 
   toggleOpen(item: Nav) {
-    this.menuSrv.visit(this._d, (i, p) => {
-      if (i !== item) i._open = false;
-    });
-    let pItem = item.__parent;
-    while (pItem) {
-      pItem._open = true;
-      pItem = pItem.__parent;
+    if (!this.openStrictly) {
+      this.menuSrv.visit(this._d, (i, p) => {
+        if (i !== item) i._open = false;
+      });
+      let pItem = item.__parent;
+      while (pItem) {
+        pItem._open = true;
+        pItem = pItem.__parent;
+      }
     }
     item._open = !item._open;
     this.cdr.markForCheck();
   }
 
-  @HostListener('click')
   _click() {
     if (this.isPad && this.collapsed) {
       this.openAside(false);
@@ -200,7 +192,6 @@ export class SidebarNavComponent implements OnInit, OnDestroy {
     }
   }
 
-  @HostListener('document:click')
   _docClick() {
     this.hideAll();
   }
@@ -209,14 +200,18 @@ export class SidebarNavComponent implements OnInit, OnDestroy {
     const { doc, router, unsubscribe$, menuSrv, cdr } = this;
     this.bodyEl = doc.querySelector('body');
     menuSrv.openedByUrl(router.url, this.recursivePath);
-    this.genFloatingContainer();
+    this.ngZone.runOutsideAngular(() => this.genFloatingContainer());
     menuSrv.change.pipe(takeUntil(unsubscribe$)).subscribe(data => {
-      menuSrv.visit(data, i => {
-        if (i._aclResult) return;
-        if (this.disabledAcl) {
-          i.disabled = true;
-        } else {
-          i._hidden = true;
+      menuSrv.visit(data, (i: Nav) => {
+        if (!i._aclResult) {
+          if (this.disabledAcl) {
+            i.disabled = true;
+          } else {
+            i._hidden = true;
+          }
+        }
+        if (this.openStrictly) {
+          i._open = i.open != null ? i.open : false;
         }
       });
       this.list = menuSrv.menus;

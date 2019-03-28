@@ -1,6 +1,5 @@
 import { SFHorizontalLayoutSchema, SFRenderSchema } from './schema/ui';
 
-// tslint:disable-next-line:no-any
 export type SFValue = any;
 
 export interface SFButton {
@@ -20,6 +19,4 @@ export interface SFButton {
   edit?: string;
 }
 
-export interface SFRenderButton extends SFHorizontalLayoutSchema, SFRenderSchema {
-
-}
+export interface SFRenderButton extends SFHorizontalLayoutSchema, SFRenderSchema {}

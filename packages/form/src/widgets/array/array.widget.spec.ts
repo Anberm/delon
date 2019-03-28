@@ -80,7 +80,7 @@ describe('form: widget: array', () => {
         .checkCount('.sf-array-item', 0)
         .add()
         .checkCount('.sf-array-item', 1)
-        .checkCount(`.sf-array-container [data-index="0"] .remove`, 0);
+        .checkCount(`.sf__array-container [data-index="0"] .remove`, 0);
     });
   });
   describe('#default data', () => {
@@ -101,13 +101,13 @@ describe('form: widget: array', () => {
       const data = [{ a: 'a1' }, { a: 'a2' }];
       const s = deepCopy(schema) as SFSchema;
       s.properties.arr.default = data;
-      page.newSchema(s)
-          .checkCount('.sf-array-item', data.length)
-          .add()
-          .checkCount('.sf-array-item', data.length + 1)
-          .reset()
-          .checkCount('.sf-array-item', data.length)
-          ;
+      page
+        .newSchema(s)
+        .checkCount('.sf-array-item', data.length)
+        .add()
+        .checkCount('.sf-array-item', data.length + 1)
+        .reset()
+        .checkCount('.sf-array-item', data.length);
     });
   });
 });

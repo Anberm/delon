@@ -1,4 +1,5 @@
 import {
+  AfterContentInit,
   AfterViewInit,
   ChangeDetectionStrategy,
   ChangeDetectorRef,
@@ -6,19 +7,19 @@ import {
   ContentChild,
   ElementRef,
   Host,
-  HostBinding,
   Input,
   OnChanges,
   OnDestroy,
   Optional,
   Renderer2,
   TemplateRef,
+  ViewChild,
 } from '@angular/core';
 import { FormControlName, NgModel } from '@angular/forms';
 import { Subscription } from 'rxjs';
 
 import { ResponsiveService } from '@delon/theme';
-import { deepGet, InputBoolean, InputNumber } from '@delon/util';
+import { deepGet, isEmpty, InputBoolean, InputNumber } from '@delon/util';
 
 import { SEContainerComponent } from './edit-container.component';
 
@@ -28,18 +29,24 @@ let nextUniqueId = 0;
 @Component({
   selector: 'se',
   templateUrl: './edit.component.html',
+  host: {
+    '[style.padding-left.px]': 'paddingValue',
+    '[style.padding-right.px]': 'paddingValue',
+    '[class.ant-form-item-with-help]': 'showErr',
+  },
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class SEComponent implements OnChanges, AfterViewInit, OnDestroy {
+export class SEComponent implements OnChanges, AfterContentInit, AfterViewInit, OnDestroy {
   private el: HTMLElement;
   private status$: Subscription;
   @ContentChild(NgModel) private readonly ngModel: NgModel;
   @ContentChild(FormControlName) private readonly formControlName: FormControlName;
+  @ViewChild('contentElement') private readonly contentElement: ElementRef;
   private clsMap: string[] = [];
   private inited = false;
   private onceFlag = false;
   invalid = false;
-  labelWidth = null;
+  _labelWidth = null;
 
   // #region fields
 
@@ -52,6 +59,7 @@ export class SEComponent implements OnChanges, AfterViewInit, OnDestroy {
   @Input() @InputBoolean() required = false;
   @Input() controlClass: string = '';
   @Input() @InputBoolean(null) line: boolean;
+  @Input() @InputNumber(null) labelWidth: number;
 
   @Input()
   set id(value: string) {
@@ -64,17 +72,10 @@ export class SEComponent implements OnChanges, AfterViewInit, OnDestroy {
 
   // #endregion
 
-  @HostBinding('style.padding-left.px')
-  get paddingLeft(): number {
+  get paddingValue(): number {
     return this.parent.gutter / 2;
   }
 
-  @HostBinding('style.padding-right.px')
-  get paddingRight(): number {
-    return this.parent.gutter / 2;
-  }
-
-  @HostBinding('class.ant-form-item-with-help')
   get showErr(): boolean {
     return this.invalid && this.parent.size !== 'compact' && !!this.error;
   }
@@ -97,13 +98,16 @@ export class SEComponent implements OnChanges, AfterViewInit, OnDestroy {
   }
 
   private setClass(): this {
-    const { el, ren, clsMap, col, parent, cdr } = this;
-    this.labelWidth = parent.labelWidth;
+    const { el, ren, clsMap, col, parent, cdr, line, labelWidth, rep } = this;
+    this._labelWidth = labelWidth != null ? labelWidth : parent.labelWidth;
     clsMap.forEach(cls => ren.removeClass(el, cls));
     clsMap.length = 0;
-    const repCls = parent.nzLayout === 'horizontal' ? this.rep.genCls(col != null ? col : parent.colInCon || parent.col) : [];
+    const repCls =
+      parent.nzLayout === 'horizontal'
+        ? rep.genCls(col != null ? col : parent.colInCon || parent.col)
+        : [];
     clsMap.push(`ant-form-item`, ...repCls, `${prefixCls}__item`);
-    if (this.line || parent.line) {
+    if (line || parent.line) {
       clsMap.push(`${prefixCls}__line`);
     }
     clsMap.forEach(cls => ren.addClass(el, cls));
@@ -114,24 +118,41 @@ export class SEComponent implements OnChanges, AfterViewInit, OnDestroy {
   private bindModel() {
     if (!this.ngControl || this.status$) return;
 
-    this.status$ = this.ngControl.statusChanges.subscribe(res => {
-      if (this.ngControl.disabled || this.ngControl.isDisabled) {
-        return ;
-      }
-      const status = res !== 'VALID';
-      if (!this.onceFlag || this.invalid === status) {
-        this.onceFlag = true;
-        return;
-      }
-      this.invalid = status;
-      this.cdr.detectChanges();
-    });
+    this.status$ = this.ngControl.statusChanges.subscribe(res =>
+      this.updateStatus(res === 'INVALID'),
+    );
+
     if (this._autoId) {
-      const control = deepGet(this.ngControl.valueAccessor, '_elementRef.nativeElement') as HTMLElement;
+      const control = deepGet(
+        this.ngControl.valueAccessor,
+        '_elementRef.nativeElement',
+      ) as HTMLElement;
       if (control) {
         control.id = this._id;
       }
     }
+  }
+
+  private updateStatus(invalid: boolean): void {
+    if (this.ngControl.disabled || this.ngControl.isDisabled) {
+      return;
+    }
+    this.invalid = (invalid && this.onceFlag) || (this.ngControl.dirty && invalid);
+    this.cdr.detectChanges();
+  }
+
+  checkContent(): void {
+    const el = this.contentElement.nativeElement;
+    const cls = `${prefixCls}__item-empty`;
+    if (isEmpty(el)) {
+      this.ren.addClass(el, cls);
+    } else {
+      this.ren.removeClass(el, cls);
+    }
+  }
+
+  ngAfterContentInit(): void {
+    this.checkContent();
   }
 
   ngOnChanges() {
@@ -142,6 +163,12 @@ export class SEComponent implements OnChanges, AfterViewInit, OnDestroy {
   ngAfterViewInit(): void {
     this.setClass().bindModel();
     this.inited = true;
+    if (this.onceFlag) {
+      Promise.resolve().then(() => {
+        this.updateStatus(this.ngControl.invalid);
+        this.onceFlag = false;
+      });
+    }
   }
 
   ngOnDestroy(): void {

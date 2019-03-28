@@ -21,7 +21,7 @@ const prefixCls = `sv`;
 })
 export class SVContainerComponent implements OnInit, OnChanges {
   private el: HTMLElement;
-  //#region fields
+  // #region fields
 
   @Input() title: string | TemplateRef<void>;
   @Input() size: 'small' | 'large';
@@ -33,11 +33,11 @@ export class SVContainerComponent implements OnInit, OnChanges {
   @Input() @InputNumber() col: number;
   @Input() default: boolean;
 
-  //#endregion
+  // #endregion
 
   constructor(el: ElementRef, private ren: Renderer2, cog: SVConfig) {
     this.el = el.nativeElement;
-    Object.assign(this, { ...new SVConfig(), ...cog});
+    Object.assign(this, { ...new SVConfig(), ...cog });
   }
 
   private setClass() {

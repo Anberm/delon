@@ -1,11 +1,14 @@
+import { Component, DebugElement, EventEmitter, ViewChild } from '@angular/core';
+import { fakeAsync, inject, tick, ComponentFixture, TestBed } from '@angular/core/testing';
 import {
-  Component,
-  DebugElement,
-  EventEmitter,
-  ViewChild,
-} from '@angular/core';
-import { inject, ComponentFixture, TestBed } from '@angular/core/testing';
-import {  FormsModule, FormBuilder, FormControlName, FormGroup, NgModel, ReactiveFormsModule, Validators } from '@angular/forms';
+  FormsModule,
+  FormBuilder,
+  FormControlName,
+  FormGroup,
+  NgModel,
+  ReactiveFormsModule,
+  Validators,
+} from '@angular/forms';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { configureTestSuite, createTestContext } from '@delon/testing';
@@ -58,52 +61,32 @@ describe('abc: edit', () => {
             fixture.detectChanges();
             expect(page.getEl(prefixCls + 'title').textContent).toContain(`parent_title`);
           });
-          describe('#firstVisual', () => {
-            let ngModel: NgModel;
-            let changes: EventEmitter<any>;
-            beforeEach(() => {
-              ngModel = dl.query(By.directive(NgModel)).injector.get(NgModel);
-              changes = ngModel.statusChanges as EventEmitter<any>;
-            });
-            it('with true', () => {
-              context.label = 'a';
-              context.parent_firstVisual = true;
-              fixture.detectChanges();
-              // mock statusChanges
-              changes.emit('INVALID');
-              page.expect('.has-error', 1);
-            });
-            it('with false', () => {
-              context.label = 'a';
-              context.parent_firstVisual = false;
-              fixture.detectChanges();
-              // mock statusChanges
-              changes.emit('INVALID');
-              page.expect('.has-error', 0);
-            });
-          });
           it('#gutter', () => {
             const gutter = 24;
             const halfGutter = gutter / 2;
             context.parent_gutter = gutter;
             fixture.detectChanges();
-            expect(page.getEl('.ant-row').style.marginLeft).toBe(
-              `-${halfGutter}px`,
-            );
-            expect(page.getEl('.ant-row').style.marginRight).toBe(
-              `-${halfGutter}px`,
-            );
+            expect(page.getEl('.ant-row').style.marginLeft).toBe(`-${halfGutter}px`);
+            expect(page.getEl('.ant-row').style.marginRight).toBe(`-${halfGutter}px`);
             const itemCls = prefixCls + 'item';
             expect(page.getEl(itemCls).style.paddingLeft).toBe(`${halfGutter}px`);
             expect(page.getEl(itemCls).style.paddingRight).toBe(`${halfGutter}px`);
           });
-          it('#labelWidth', () => {
-            context.parent_labelWidth = 20;
-            context.label = 'aa';
-            fixture.detectChanges();
-            expect(page.getEl(prefixCls + 'label').style.width).toBe(
-              `${context.parent_labelWidth}px`,
-            );
+          describe('#labelWidth', () => {
+            it('should working', () => {
+              context.labelWidth = 20;
+              context.label = 'aa';
+              fixture.detectChanges();
+              expect(page.getEl(prefixCls + 'label').style.width).toBe(`${context.labelWidth}px`);
+            });
+            it('should be inherit parent labelWidth value', () => {
+              context.parent_labelWidth = 20;
+              context.label = 'aa';
+              fixture.detectChanges();
+              expect(page.getEl(prefixCls + 'label').style.width).toBe(
+                `${context.parent_labelWidth}px`,
+              );
+            });
           });
           it('#layout', () => {
             context.parent_layout = 'horizontal';
@@ -167,9 +150,7 @@ describe('abc: edit', () => {
           it('#label', () => {
             context.label = 'test-label';
             fixture.detectChanges();
-            expect(page.getEl(prefixCls + 'label').textContent).toContain(
-              'test-label',
-            );
+            expect(page.getEl(prefixCls + 'label').textContent).toContain('test-label');
           });
           it('should be only horizontal will increase the responsive', () => {
             context.parent_layout = 'inline';
@@ -190,7 +171,8 @@ describe('abc: edit', () => {
         let ngModel: NgModel;
         it('should be show error', () => {
           ngModel = dl.query(By.directive(NgModel)).injector.get(NgModel);
-          const changes = ngModel.statusChanges as EventEmitter<any>;
+          spyOnProperty(ngModel, 'dirty').and.returnValue(true);
+          const changes = ngModel.statusChanges as EventEmitter<string>;
           // mock statusChanges
           changes.emit('VALID');
           page.expect('se-error', 0);
@@ -199,6 +181,28 @@ describe('abc: edit', () => {
           page.expect('se-error');
         });
       });
+    });
+
+    describe('#firstVisual', () => {
+      beforeEach(() => {
+        ({ fixture, dl, context } = createTestContext(TestComponent));
+        context.required = true;
+        context.label = 'a';
+      });
+      it('with true', fakeAsync(() => {
+        context.parent_firstVisual = true;
+        fixture.detectChanges();
+        tick();
+        page = new PageObject();
+        page.expect('.has-error', 1);
+      }));
+      it('with false', fakeAsync(() => {
+        context.parent_firstVisual = false;
+        fixture.detectChanges();
+        tick();
+        page = new PageObject();
+        page.expect('.has-error', 0);
+      }));
     });
   });
 
@@ -241,7 +245,8 @@ describe('abc: edit', () => {
       fixture2.detectChanges();
       page = new PageObject();
       const formControlName = dl.query(By.directive(FormControlName)).injector.get(FormControlName);
-      const changes = formControlName.statusChanges as EventEmitter<any>;
+      const changes = formControlName.statusChanges as EventEmitter<string>;
+      spyOnProperty(formControlName, 'dirty').and.returnValue(true);
       // mock statusChanges
       changes.emit('VALID');
       page.expect('se-error', 0);
@@ -255,7 +260,7 @@ describe('abc: edit', () => {
         context.disabled = true;
         fixture.detectChanges();
         ngModel = dl.query(By.directive(NgModel)).injector.get(NgModel);
-        const changes = ngModel.statusChanges as EventEmitter<any>;
+        const changes = ngModel.statusChanges as EventEmitter<string>;
         changes.emit('INVALID');
         page.expect('se-error', 0);
       });
@@ -270,7 +275,7 @@ describe('abc: edit', () => {
         page = new PageObject();
         const allControls = dl.queryAll(By.directive(FormControlName));
         const formControlName = allControls[1].injector.get(FormControlName);
-        const changes = formControlName.statusChanges as EventEmitter<any>;
+        const changes = formControlName.statusChanges as EventEmitter<string>;
         // mock statusChanges
         changes.emit('VALID');
         page.expect('se-error', 0);
@@ -337,6 +342,14 @@ describe('abc: edit', () => {
       `);
       expect(page.getEl('#expected').id).toBe('expected');
     });
+    it(`should be keeping placeholder when content is empty`, () => {
+      genModule(`
+      <form nz-form se-container>
+        <se label="a"></se>
+      </form>
+      `);
+      page.expect('.se__item-empty', 1);
+    });
   });
 
   class PageObject {
@@ -355,21 +368,37 @@ describe('abc: edit', () => {
 
 @Component({
   template: `
-  <form nz-form [se-container]="parent_colInCon" #seComp="seContainer" [col]="parent_col"
-    [title]="parent_title"
-    [firstVisual]="parent_firstVisual" [line]="parent_line"
-    [size]="parent_size" [nzLayout]="parent_layout"
-    [labelWidth]="parent_labelWidth" [gutter]="parent_gutter">
-
-    <se-title>title</se-title>
-    <se #viewComp
-      [optional]="optional" [optionalHelp]="optionalHelp"
-      [error]="error" [extra]="extra" [controlClass]="controlClass"
-      [label]="label" [col]="col" [required]="required" [line]="line">
-      <input type="text" [(ngModel)]="val" name="val" required [disabled]="disabled">
-    </se>
-
-  </form>`,
+    <form
+      nz-form
+      [se-container]="parent_colInCon"
+      #seComp="seContainer"
+      [col]="parent_col"
+      [title]="parent_title"
+      [firstVisual]="parent_firstVisual"
+      [line]="parent_line"
+      [size]="parent_size"
+      [nzLayout]="parent_layout"
+      [labelWidth]="parent_labelWidth"
+      [gutter]="parent_gutter"
+    >
+      <se-title>title</se-title>
+      <se
+        #viewComp
+        [optional]="optional"
+        [optionalHelp]="optionalHelp"
+        [error]="error"
+        [extra]="extra"
+        [controlClass]="controlClass"
+        [label]="label"
+        [col]="col"
+        [required]="required"
+        [line]="line"
+        [labelWidth]="labelWidth"
+      >
+        <input type="text" [(ngModel)]="val" name="val" required [disabled]="disabled" />
+      </se>
+    </form>
+  `,
 })
 class TestComponent {
   @ViewChild('seComp')
@@ -396,6 +425,7 @@ class TestComponent {
   line: boolean;
   col: number;
   controlClass = '';
+  labelWidth = null;
 
   val = '';
   showModel = true;
@@ -404,14 +434,15 @@ class TestComponent {
 
 @Component({
   template: `
-  <form nz-form [formGroup]="validateForm" (ngSubmit)="submitForm()" se-container gutter="32">
-    <se label="App Key" error="Please input your username!">
-      <input formControlName="userName" nz-input placeholder="Username">
-    </se>
-    <se label="dis" id="dis">
-      <input formControlName="dis" nz-input>
-    </se>
-  </form>`,
+    <form nz-form [formGroup]="validateForm" (ngSubmit)="submitForm()" se-container gutter="32">
+      <se label="App Key" error="Please input your username!">
+        <input formControlName="userName" nz-input placeholder="Username" />
+      </se>
+      <se label="dis" id="dis">
+        <input formControlName="dis" nz-input />
+      </se>
+    </form>
+  `,
 })
 class TestReactiveComponent {
   validateForm: FormGroup;

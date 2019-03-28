@@ -3,31 +3,7 @@ import { ControlWidget } from '../../widget';
 
 @Component({
   selector: 'sf-number',
-  template: `
-    <sf-item-wrap
-      [id]="id"
-      [schema]="schema"
-      [ui]="ui"
-      [showError]="showError"
-      [error]="error"
-      [showTitle]="schema.title"
-    >
-      <nz-input-number
-        [ngModel]="value"
-        (ngModelChange)="_setValue($event)"
-        [nzDisabled]="disabled"
-        [nzSize]="ui.size"
-        [nzMin]="min"
-        [nzMax]="max"
-        [nzStep]="step"
-        [nzFormatter]="formatter"
-        [nzParser]="parser"
-        [nzPrecision]="ui.precision"
-        [nzPlaceHolder]="ui.placeholder || ''"
-      >
-      </nz-input-number>
-    </sf-item-wrap>
-  `,
+  templateUrl: './number.widget.html',
 })
 export class NumberWidget extends ControlWidget implements OnInit {
   min: number;
@@ -51,11 +27,11 @@ export class NumberWidget extends ControlWidget implements OnInit {
       this.step = Math.trunc(this.step);
     }
     if (ui.prefix != null) {
-      ui.formatter = value => `${ui.prefix} ${value}`;
+      ui.formatter = value =>  value == null ? '' : `${ui.prefix} ${value}`;
       ui.parser = value => value.replace(`${ui.prefix} `, '');
     }
     if (ui.unit != null) {
-      ui.formatter = value => `${value} ${ui.unit}`;
+      ui.formatter = value =>  value == null ? '' : `${value} ${ui.unit}`;
       ui.parser = value => value.replace(` ${ui.unit}`, '');
     }
     if (ui.formatter) this.formatter = ui.formatter;

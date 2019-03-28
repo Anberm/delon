@@ -5,13 +5,17 @@
     "**/.git/subtree-cache/**": true,
     "**/node_modules/*/**": true,
     "**/dist/*/**": true,
-    "**/coverage/*/**": true,
-    "**/tools/*/**": true,
-    "**/.tmp/*/**": true,
+    "**/coverage/*/**": true
   },
-  "files.exclude": {
-    "**/.tmp/*/**": true,
+  "html.format.wrapAttributes": "force-aligned",
+  "html.format.wrapLineLength": 100,
+  "editor.tabSize": 2,
+  "editor.insertSpaces": true,
+  // "editor.formatOnSave": true,
+  "editor.codeActionsOnSave": {
+    "source.fixAll": true,
   },
-  "tslint.autoFixOnSave": true,
-  "tslint.alwaysShowStatus": true,
+  "[javascript]": {
+    "editor.formatOnSave": true
+  }
 }

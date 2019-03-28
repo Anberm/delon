@@ -1,11 +1,5 @@
 import { DOCUMENT } from '@angular/common';
-import {
-  Inject,
-  Injectable,
-  Injector,
-  OnDestroy,
-  Optional,
-} from '@angular/core';
+import { Inject, Injectable, Injector, OnDestroy, Optional } from '@angular/core';
 import { Title } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subscription } from 'rxjs';
@@ -29,14 +23,11 @@ export class TitleService implements OnDestroy {
     @Optional()
     @Inject(ALAIN_I18N_TOKEN)
     private i18nSrv: AlainI18NService,
-    // tslint:disable-next-line:no-any
     @Inject(DOCUMENT) private doc: any,
   ) {
-    if (this.i18nSrv) {
-      this.i18n$ = this.i18nSrv.change
-        .pipe(filter(() => !!this.i18n$))
-        .subscribe(() => this.setTitle());
-    }
+    this.i18n$ = this.i18nSrv.change
+      .pipe(filter(() => !!this.i18n$))
+      .subscribe(() => this.setTitle());
   }
 
   /** 设置分隔符 */
@@ -76,8 +67,7 @@ export class TitleService implements OnDestroy {
     let next = this.injector.get(ActivatedRoute);
     while (next.firstChild) next = next.firstChild;
     const data = (next.snapshot && next.snapshot.data) || {};
-    if (data.titleI18n && this.i18nSrv)
-      data.title = this.i18nSrv.fanyi(data.titleI18n);
+    if (data.titleI18n && this.i18nSrv) data.title = this.i18nSrv.fanyi(data.titleI18n);
     return data.title;
   }
 
@@ -96,11 +86,7 @@ export class TitleService implements OnDestroy {
    */
   setTitle(title?: string | string[]) {
     if (!title) {
-      title =
-        this.getByRoute() ||
-        this.getByMenu() ||
-        this.getByElement() ||
-        this.default;
+      title = this.getByRoute() || this.getByMenu() || this.getByElement() || this.default;
     }
     if (title && !Array.isArray(title)) {
       title = [title];
@@ -128,6 +114,6 @@ export class TitleService implements OnDestroy {
   }
 
   ngOnDestroy(): void {
-    if (this.i18n$) this.i18n$.unsubscribe();
+    this.i18n$.unsubscribe();
   }
 }

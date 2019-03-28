@@ -3,11 +3,7 @@ import { Inject, Injectable, OnDestroy } from '@angular/core';
 import { Router } from '@angular/router';
 import { Observable, Observer } from 'rxjs';
 
-import {
-  DA_SERVICE_TOKEN,
-  ITokenModel,
-  ITokenService,
-} from '../token/interface';
+import { DA_SERVICE_TOKEN, ITokenModel, ITokenService } from '../token/interface';
 
 const OPENTYPE = '_delonAuthSocialType';
 const HREFCALLBACK = '_delonAuthSocialCallbackByHref';
@@ -22,10 +18,9 @@ export class SocialService implements OnDestroy {
 
   constructor(
     @Inject(DA_SERVICE_TOKEN) private tokenService: ITokenService,
-    // tslint:disable-next-line:no-any
     @Inject(DOCUMENT) private doc: any,
     private router: Router,
-  ) { }
+  ) {}
 
   /**
    * 使用窗体打开授权页，返回值是 `Observable<ITokenModel>` 用于订阅授权后返回的结果
@@ -72,8 +67,7 @@ export class SocialService implements OnDestroy {
   ): Observable<ITokenModel> | void {
     options = {
       type: 'window',
-      windowFeatures:
-        'location=yes,height=570,width=520,scrollbars=yes,status=yes',
+      windowFeatures: 'location=yes,height=570,width=520,scrollbars=yes,status=yes',
       ...options,
     };
     localStorage.setItem(OPENTYPE, options.type);

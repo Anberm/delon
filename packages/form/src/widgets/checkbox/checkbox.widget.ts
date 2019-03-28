@@ -1,4 +1,5 @@
 import { Component } from '@angular/core';
+import { LocaleData } from '@delon/theme';
 import { SFValue } from '../../interface';
 import { SFSchemaEnum } from '../../schema';
 import { getData } from '../../utils';
@@ -16,25 +17,23 @@ export class CheckboxWidget extends ControlWidget {
   labelTitle = ``;
   inited = false;
 
-  get l() {
+  get l(): LocaleData {
     return this.formProperty.root.widget.sfComp.locale;
   }
 
   reset(value: SFValue) {
     this.inited = false;
-    getData(this.schema, this.ui, this.formProperty.formData).subscribe(
-      list => {
-        this.data = list;
-        this.allChecked = false;
-        this.indeterminate = false;
-        this.labelTitle = list.length === 0 ? '' : this.schema.title;
-        this.grid_span = this.ui.span && this.ui.span > 0 ? this.ui.span : 0;
+    getData(this.schema, this.ui, this.formProperty.formData).subscribe(list => {
+      this.data = list;
+      this.allChecked = false;
+      this.indeterminate = false;
+      this.labelTitle = list.length === 0 ? '' : this.schema.title;
+      this.grid_span = this.ui.span && this.ui.span > 0 ? this.ui.span : 0;
 
-        this.updateAllChecked();
-        this.inited = true;
-        this.cd.detectChanges();
-      },
-    );
+      this.updateAllChecked();
+      this.inited = true;
+      this.cd.detectChanges();
+    });
   }
 
   _setValue(value: SFValue) {
@@ -50,20 +49,17 @@ export class CheckboxWidget extends ControlWidget {
   }
 
   groupInGridChange(values: SFValue[]) {
-    this.data.forEach(
-      item => (item.checked = values.indexOf(item.value) !== -1),
-    );
+    this.data.forEach(item => (item.checked = values.indexOf(item.value) !== -1));
     this.notifySet();
   }
 
-  onAllChecked(e: Event) {
-    e.stopPropagation();
+  onAllChecked() {
     this.data.forEach(item => (item.checked = this.allChecked));
     this.notifySet();
   }
 
   updateAllChecked(): this {
-    if (this.data.every(item => item.checked === false)) {
+    if (this.data.every(item => item.checked !== true)) {
       this.allChecked = false;
       this.indeterminate = false;
     } else if (this.data.every(item => item.checked === true)) {
@@ -72,8 +68,7 @@ export class CheckboxWidget extends ControlWidget {
     } else {
       this.indeterminate = true;
     }
-    // issues: https://github.com/NG-ZORRO/ng-zorro-antd/issues/2025
-    setTimeout(() => this.detectChanges());
+    this.detectChanges();
     return this;
   }
 

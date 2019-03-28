@@ -9,7 +9,7 @@ import {
   OnInit,
   Output,
 } from '@angular/core';
-import { DelonLocaleService } from '@delon/theme';
+import { DelonLocaleService, LocaleData } from '@delon/theme';
 import { InputBoolean, InputNumber } from '@delon/util';
 import { Subscription } from 'rxjs';
 
@@ -23,8 +23,7 @@ import { NoticeIconSelect, NoticeItem } from './notice-icon.types';
 })
 export class NoticeIconComponent implements OnInit, OnChanges, OnDestroy {
   private i18n$: Subscription;
-  // tslint:disable-next-line:no-any
-  locale: any = {};
+  locale: LocaleData = {};
 
   @Input() data: NoticeItem[] = [];
   @Input() @InputNumber() count: number;
@@ -36,7 +35,7 @@ export class NoticeIconComponent implements OnInit, OnChanges, OnDestroy {
   @Output() readonly clear = new EventEmitter<string>();
   @Output() readonly popoverVisibleChange = new EventEmitter<boolean>();
 
-  constructor(private i18n: DelonLocaleService, private cdr: ChangeDetectorRef) { }
+  constructor(private i18n: DelonLocaleService, private cdr: ChangeDetectorRef) {}
 
   onVisibleChange(result: boolean) {
     this.popoverVisibleChange.emit(result);

@@ -60,7 +60,8 @@ Property | Description | Type | Default
 `[rowClickTime]` | Click twice in the time range for double click, unit is millisecond | `number` | `200`
 `[header]` | Table header renderer | `string,TemplateRef<void>` | -
 `[footer]` | Table footer renderer | `string,TemplateRef<void>` | -
-`[body]` | Table extra body renderer, generally used to add total rows | `TemplateRef<void>` | -
+`[bodyHeader]` | Table extra body renderer in header, generally used to add total rows | `TemplateRef<STStatisticalResults>` | -
+`[body]` | Table extra body renderer, generally used to add total rows | `TemplateRef<STStatisticalResults>` | -
 `[widthConfig]` | Set col width can not used with width of STColumn | `string[]` | -
 `[expandRowByClick]` | Whether to expand row by clicking anywhere in the whole row | `boolean` | `false`
 `[expand]` | Whether current column include expand icon | `TemplateRef<void>` | -
@@ -107,12 +108,14 @@ class TestComponent {
 
 Property | Description | Type | Default
 -------- | ----------- | ---- | -------
+`[type]` | Pagination type, `page` used `pi`, `ps`; `skip` used `skip`, `limit` | `page,skip` | `page`
 `[params]` | Request parameters, default to auto append `pi`, `ps` to URL | `any` | -
 `[method]` | Request method | `'POST','GET','HEAD','PUT','PATCH','DELETE'` | `'GET'`
 `[body]` | Request body (only method is POST)  | `any` | -
 `[headers]` | Request header | `any` | -
-`[reName]` | Map name `pi`、`ps` | `STReqReNameType` | `{ pi: 'pi', ps: 'ps' }`
+`[reName]` | Map name `pi`、`ps` | `STReqReNameType` | `{ pi: 'pi', ps: 'ps', skip: 'skip', limit: 'limit' }`
 `[allInBody]` | Whether to request all parameter data into `body` (except `url` itself parameter) | `boolean` | `false`
+`[process]` | Pre-request data processing | `(requestOptions: STRequestOptions) => STRequestOptions` | -
 
 ### STRes
 
@@ -220,7 +223,7 @@ Property | Description | Type | Default
 `[buttons]` | Buttons of this column | `STColumnButton[]` | -
 `[width]` | Width of this column (**NOTICE:** If the fixed column must be a number), e.g: `100`, `10%`, `100px` | `string,number` | -
 `[fixed]` | Set column to be fixed, must specify `width` | `left,right` | -
-`[format]` | Format value of this column | `function(cell: any, row: any)` | -
+`[format]` | Format value of this column | `(item: STData, col: STColumn) => string` | -
 `[className]` | Class name of this column, e.g: `text-center`, `text-right`, `text-danger`, pls refer to [Style Tools](/theme/tools) | `string` | -
 `[colSpan]` | Span of this column's title | `number` | -
 `[sort]` | Sort config of this column, Remote Data Configuration**Priority** Rule: <br>`true` allow sorting<br>`string` corresponding `key` value| `true,string,STColumnSort` | -
@@ -234,7 +237,9 @@ Property | Description | Type | Default
 `[click]` | Callback of type is link | `(record: STData, instance?: STComponent) => void` | -
 `[badge]` | Config of type is badge | `STColumnBadge` | -
 `[tag]` | Config of type is tag | `STColumnTag` | -
+`[noIndex]` | Line number index start value | `number,(item: STData, col: STColumn, idx: number) => number` | `1`
 `[iif]` | Custom conditional expression<br>1. Execute only once when `columns` is assigned<br>2. Call `resetColumns()` to trigger again | `(item: STColumn) => boolean` | -
+`[statistical]` | Statistics | `STStatisticalType,STStatistical` | -
 
 ### STColumnSort
 
@@ -349,3 +354,21 @@ Property | Description | Type | Default
 `[text]` | Tag text | `string` | -
 `[color]` | Tag color value | `string` | -
 
+### STStatistical
+
+Property | Description | Type | Default
+-------- | ----------- | ---- | -------
+`[type]` | Statistic type of current column | `STStatisticalType | STStatisticalFn` | -
+`[digits]` | The number of digits to appear after the decimal point | `number` | `2`
+`[currency]` | Whether formatting currency, default to `true` when `type` is `STStatisticalFn`,`sum`,`average`,`max`,`min` | `boolean` | -
+
+**STStatisticalFn**
+
+```ts
+(
+  values: number[],
+  col: STColumn,
+  list: STData[],
+  rawData?: any,
+) => STStatisticalResult
+```

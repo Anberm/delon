@@ -1,45 +1,31 @@
 import { Component, OnInit } from '@angular/core';
+import { ArrayProperty } from '../../model/array.property';
 import { FormProperty } from '../../model/form.property';
 import { SFGridSchema } from '../../schema/ui';
 import { ObjectLayoutWidget } from '../../widget';
 
 @Component({
   selector: 'sf-object',
-  template: `
-  <ng-container *ngIf="grid; else noGrid">
-    <div nz-row [nzGutter]="grid.gutter">
-      <ng-container *ngFor="let i of list">
-        <ng-container *ngIf="i.property.visible && i.show">
-          <div nz-col
-            [nzSpan]="i.grid.span" [nzOffset]="i.grid.offset"
-            [nzXs]="i.grid.xs" [nzSm]="i.grid.sm" [nzMd]="i.grid.md"
-            [nzLg]="i.grid.lg" [nzXl]="i.grid.xl" [nzXXl]="i.grid.xxl">
-            <sf-item [formProperty]="i.property" [fixed-label]="i.spanLabelFixed"></sf-item>
-          </div>
-        </ng-container>
-      </ng-container>
-    </div>
-  </ng-container>
-  <ng-template #noGrid>
-    <ng-container *ngFor="let i of list">
-      <ng-container *ngIf="i.property.visible && i.show">
-        <sf-item [formProperty]="i.property" [fixed-label]="i.spanLabelFixed"></sf-item>
-      </ng-container>
-    </ng-container>
-  </ng-template>`,
+  templateUrl: './object.widget.html',
 })
 export class ObjectWidget extends ObjectLayoutWidget implements OnInit {
   grid: SFGridSchema;
   list: Array<{}> = [];
+  title: string;
 
   ngOnInit(): void {
-    this.grid = this.ui.grid;
+    const { formProperty, ui } = this;
+    const { grid, showTitle } = ui;
+    if (!formProperty.isRoot() && !(formProperty.parent instanceof ArrayProperty) && showTitle === true) {
+      this.title = this.schema.title;
+    }
+    this.grid = grid;
     const list: Array<{}> = [];
-    for (const key of this.formProperty.propertiesId) {
-      const property = this.formProperty.properties[key] as FormProperty;
+    for (const key of formProperty.propertiesId) {
+      const property = formProperty.properties[key] as FormProperty;
       const item = {
         property,
-        grid: property.ui.grid || this.grid || {},
+        grid: property.ui.grid || grid || {},
         spanLabelFixed: property.ui.spanLabelFixed,
         show: property.ui.hidden === false,
       };

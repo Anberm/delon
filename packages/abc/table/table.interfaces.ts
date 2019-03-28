@@ -1,9 +1,15 @@
-// tslint:disable:no-any
+import { HttpHeaders, HttpParams } from '@angular/common/http';
 import { DrawerHelperOptions, ModalHelperOptions } from '@delon/theme';
 import { ModalOptionsForService, NzDrawerOptions } from 'ng-zorro-antd';
 import { STComponent } from './table.component';
 
 export interface STReq {
+  /**
+   * 分页类型，默认：`page`
+   * - `page` 使用 `pi`，`ps` 组合
+   * - `skip` 使用 `skip`，`limit` 组合
+   */
+  type?: 'page' | 'skip';
   /**
    * 额外请求参数，默认自动附加 `pi`、`ps` 至URL
    * - `{ status: 'new' }` => `url?pi=1&ps=10&status=new`
@@ -24,6 +30,28 @@ export interface STReq {
    * 是否将请求所有参数数据都放入 `body` 当中（`url` 地址本身参数除外），仅当 `method: 'POST'` 时有效，默认：`false`
    */
   allInBody?: boolean;
+  /**
+   * 请求前数据处理
+   */
+  process?: (requestOptions: STRequestOptions) => STRequestOptions;
+}
+
+export interface STRequestOptions {
+  body?: any;
+  headers?:
+    | HttpHeaders
+    | {
+        [header: string]: string | string[];
+      };
+  params?:
+    | HttpParams
+    | {
+        [param: string]: string | string[];
+      };
+  observe?: 'body' | 'events' | 'response';
+  reportProgress?: boolean;
+  responseType?: 'arraybuffer' | 'blob' | 'json' | 'text';
+  withCredentials?: boolean;
 }
 
 export interface STLoadOptions {
@@ -123,6 +151,10 @@ export interface STData {
  */
 export interface STColumn {
   /**
+   * 用于定义数据源主键，例如：`STStatistical`
+   */
+  key?: string;
+  /**
    * 列标题
    */
   title: string;
@@ -152,17 +184,17 @@ export interface STColumn {
    * - `yn` 将`boolean`类型徽章化 [document](https://ng-alain.com/docs/data-render#yn)
    */
   type?:
-  | 'checkbox'
-  | 'link'
-  | 'badge'
-  | 'tag'
-  | 'radio'
-  | 'img'
-  | 'currency'
-  | 'number'
-  | 'date'
-  | 'yn'
-  | 'no';
+    | 'checkbox'
+    | 'link'
+    | 'badge'
+    | 'tag'
+    | 'radio'
+    | 'img'
+    | 'currency'
+    | 'number'
+    | 'date'
+    | 'yn'
+    | 'no';
   /**
    * 链接回调，若返回一个字符串表示导航URL会自动触发 `router.navigateByUrl`
    */
@@ -261,8 +293,9 @@ export interface STColumn {
   /**
    * 行号索引，默认：`1`
    * - 计算规则为：`index + noIndex`
+   * - 支持自定义方法
    */
-  noIndex?: number;
+  noIndex?: number | ((item: STData, col: STColumn, idx: number) => number);
   /**
    * 条件表达式
    * - 仅赋值 `columns` 时执行一次
@@ -270,7 +303,44 @@ export interface STColumn {
    */
   iif?: (item: STColumn) => boolean;
 
+  /**
+   * 统计
+   */
+  statistical?: STStatisticalType | STStatistical;
+
   [key: string]: any;
+}
+
+export type STStatisticalType = 'count' | 'distinctCount' | 'sum' | 'average' | 'max' | 'min';
+
+export type STStatisticalFn = (
+  values: number[],
+  col: STColumn,
+  list: STData[],
+  rawData?: any,
+) => STStatisticalResult;
+
+export interface STStatistical {
+  type: STStatisticalType | STStatisticalFn;
+  /**
+   * 保留小数位数，默认：`2`
+   */
+  digits?: number;
+  /**
+   * 是否需要货币格式化，默认以下情况为 `true`
+   * - `type` 为 `STStatisticalFn`、 `sum`、`average`、`max`、`min`
+   */
+  currency?: boolean;
+}
+
+export interface STStatisticalResults {
+  [key: string]: STStatisticalResult;
+  [index: number]: STStatisticalResult;
+}
+
+export interface STStatisticalResult {
+  value: number;
+  text?: string;
 }
 
 export interface STColumnSort {
@@ -436,10 +506,7 @@ export interface STColumnButton {
    * - reload：重新刷新当前页
    * - load：重新加载数据，并重置页码为：`1`
    */
-  click?:
-  | 'reload'
-  | 'load'
-  | ((record: STData, modal?: any, instance?: STComponent) => any);
+  click?: 'reload' | 'load' | ((record: STData, modal?: any, instance?: STComponent) => any);
   /**
    * 是否需要气泡确认框
    */
@@ -553,6 +620,8 @@ export interface STColumnButtonDrawerConfig {
 export interface STReqReNameType {
   pi?: string;
   ps?: string;
+  skip?: string;
+  limit?: string;
 }
 
 export interface STResReNameType {
@@ -639,18 +708,18 @@ export interface STColumnTagValue {
    * - 色值：#f50,#ff0
    */
   color?:
-  | 'geekblue'
-  | 'blue'
-  | 'purple'
-  | 'success'
-  | 'red'
-  | 'volcano'
-  | 'orange'
-  | 'gold'
-  | 'lime'
-  | 'green'
-  | 'cyan'
-  | string;
+    | 'geekblue'
+    | 'blue'
+    | 'purple'
+    | 'success'
+    | 'red'
+    | 'volcano'
+    | 'orange'
+    | 'gold'
+    | 'lime'
+    | 'green'
+    | 'cyan'
+    | string;
 }
 
 export type STChangeType =

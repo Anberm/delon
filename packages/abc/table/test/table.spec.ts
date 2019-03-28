@@ -15,10 +15,13 @@ import { Router } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 import { of, Observable, Subject } from 'rxjs';
 
-import { en_US, ALAIN_I18N_TOKEN,
+import {
+  en_US,
+  ALAIN_I18N_TOKEN,
   DatePipe,
   DelonLocaleModule,
   DelonLocaleService,
+  DrawerHelper,
   ModalHelper,
 } from '@delon/theme';
 import { deepCopy, deepGet } from '@delon/util';
@@ -755,6 +758,39 @@ describe('abc: table', () => {
               });
             });
           });
+          describe('#drawer', () => {
+            it('is normal mode', (done: () => void) => {
+              const columns: STColumn[] = [
+                {
+                  title: '',
+                  buttons: [
+                    {
+                      text: 'a',
+                      type: 'drawer',
+                      click: jasmine.createSpy(),
+                      drawer: {
+                        component: {},
+                        params: (record: any) => ({ aa: 1 }),
+                      },
+                    },
+                  ],
+                },
+              ];
+              const drawerHelp = injector.get(DrawerHelper);
+              const mock$ = new Subject();
+              spyOn(drawerHelp, 'create').and.callFake(() => mock$);
+              page.newColumn(columns).then(() => {
+                expect(drawerHelp.create).not.toHaveBeenCalled();
+                page.clickCell('a');
+                expect(drawerHelp.create).toHaveBeenCalled();
+                expect(columns[0].buttons[0].click).not.toHaveBeenCalled();
+                mock$.next({});
+                expect(columns[0].buttons[0].click).toHaveBeenCalled();
+                mock$.unsubscribe();
+                done();
+              });
+            });
+          });
           describe('#link', () => {
             it('should be trigger click', (done: () => void) => {
               const columns: STColumn[] = [
@@ -1385,9 +1421,9 @@ describe('abc: table', () => {
         it('shoule be recalculate no value', done => {
           page.newColumn([ { title: '', type: 'no' } ]).then(() => {
             page.expectCurrentPageTotal(PS);
-            comp._data.forEach((v, idx) => expect(v._values[0]).toBe(idx + 1));
+            comp._data.forEach((v, idx) => expect(v._values[0].text).toBe(idx + 1));
             comp.removeRow(comp._data[0]);
-            comp._data.forEach((v, idx) => expect(v._values[0]).toBe(idx + 1));
+            comp._data.forEach((v, idx) => expect(v._values[0].text).toBe(idx + 1));
             done();
           });
         });

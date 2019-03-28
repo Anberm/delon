@@ -16,8 +16,7 @@ export class LazyService {
   private cached: { [key: string]: LazyResult } = {};
   private _notify: BehaviorSubject<LazyResult[]> = new BehaviorSubject<LazyResult[]>([]);
 
-  // tslint:disable-next-line:no-any
-  constructor(@Inject(DOCUMENT) private doc: any) { }
+  constructor(@Inject(DOCUMENT) private doc: any) {}
 
   get change(): Observable<LazyResult[]> {
     return this._notify.asObservable().pipe(
@@ -32,7 +31,9 @@ export class LazyService {
   }
 
   load(paths: string | string[]): Promise<LazyResult[]> {
-    if (!Array.isArray(paths)) { paths = [paths]; }
+    if (!Array.isArray(paths)) {
+      paths = [paths];
+    }
 
     const promises: Array<Promise<LazyResult>> = [];
     paths.forEach(path => {
@@ -62,7 +63,6 @@ export class LazyService {
         resolve(item);
       };
 
-      // tslint:disable-next-line:no-any
       const node = this.doc.createElement('script') as any;
       node.type = 'text/javascript';
       node.src = path;
@@ -83,18 +83,20 @@ export class LazyService {
           }
         };
       } else {
-        node.onload = () => onSuccess({
-          path,
-          loaded: true,
-          status: 'ok',
-        });
+        node.onload = () =>
+          onSuccess({
+            path,
+            loaded: true,
+            status: 'ok',
+          });
       }
-      node.onerror = (error: {}) => onSuccess({
-        path,
-        loaded: false,
-        status: 'error',
-        error,
-      });
+      node.onerror = (error: {}) =>
+        onSuccess({
+          path,
+          loaded: false,
+          status: 'error',
+          error,
+        });
       this.doc.getElementsByTagName('head')[0].appendChild(node);
     });
   }
