@@ -1,11 +1,10 @@
 import { DecimalPipe } from '@angular/common';
 import { Host, Injectable } from '@angular/core';
 import { DomSanitizer } from '@angular/platform-browser';
-import { of, Observable } from 'rxjs';
-import { catchError, map } from 'rxjs/operators';
-
 import { _HttpClient, CNCurrencyPipe, DatePipe, YNPipe } from '@delon/theme';
 import { deepCopy, deepGet } from '@delon/util';
+import { of, Observable } from 'rxjs';
+import { catchError, map } from 'rxjs/operators';
 
 import { STSortMap } from './table-column-source';
 import {
@@ -15,6 +14,7 @@ import {
   STPage,
   STReq,
   STRequestOptions,
+  STReqReNameType,
   STRes,
   STRowClassName,
   STSingleSort,
@@ -25,32 +25,32 @@ import {
 } from './table.interfaces';
 
 export interface STDataSourceOptions {
-  pi?: number;
-  ps?: number;
-  data?: string | STData[] | Observable<STData[]>;
-  total?: number;
-  req?: STReq;
-  res?: STRes;
-  page?: STPage;
-  columns?: STColumn[];
-  singleSort?: STSingleSort;
-  multiSort?: STMultiSort;
+  pi: number;
+  ps: number;
+  data: string | STData[] | Observable<STData[]>;
+  total: number;
+  req: STReq;
+  res: STRes;
+  page: STPage;
+  columns: STColumn[];
+  singleSort?: STSingleSort | null;
+  multiSort?: STMultiSort | null;
   rowClassName?: STRowClassName;
 }
 
 export interface STDataSourceResult {
   /** 是否需要显示分页器 */
-  pageShow?: boolean;
+  pageShow: boolean;
   /** 新 `pi`，若返回 `undefined` 表示用户受控 */
-  pi?: number;
+  pi: number;
   /** 新 `ps`，若返回 `undefined` 表示用户受控 */
-  ps?: number;
+  ps: number;
   /** 新 `total`，若返回 `undefined` 表示用户受控 */
-  total?: number;
+  total: number;
   /** 数据 */
-  list?: STData[];
+  list: STData[];
   /** 统计数据 */
-  statistical?: STStatisticalResults;
+  statistical: STStatisticalResults;
 }
 
 @Injectable()
@@ -91,13 +91,12 @@ export class STDataSource {
               showPage = false;
             } else {
               // list
-              ret = deepGet(result, res.reName.list as string[], []);
+              ret = deepGet(result, res.reName!.list as string[], []);
               if (ret == null || !Array.isArray(ret)) {
                 ret = [];
               }
               // total
-              const resultTotal =
-                res.reName.total && deepGet(result, res.reName.total as string[], null);
+              const resultTotal = res.reName!.total && deepGet(result, res.reName!.total as string[], null);
               retTotal = resultTotal == null ? total || 0 : +resultTotal;
             }
             return deepCopy(ret);
@@ -131,9 +130,9 @@ export class STDataSource {
             columns
               .filter(w => w.filter)
               .forEach(c => {
-                const values = c.filter.menus.filter(w => w.checked);
+                const values = c.filter!.menus.filter(w => w.checked);
                 if (values.length === 0) return;
-                const onFilter = c.filter.fn;
+                const onFilter = c.filter!.fn;
                 if (typeof onFilter !== 'function') {
                   console.warn(`[st] Muse provide the fn function in filter`);
                   return;
@@ -159,7 +158,7 @@ export class STDataSource {
 
       // pre-process
       if (typeof res.process === 'function') {
-        data$ = data$.pipe(map(result => res.process(result)));
+        data$ = data$.pipe(map(result => res.process!(result, rawData)));
       }
 
       // data accelerator
@@ -221,7 +220,7 @@ export class STDataSource {
         ret = this.datePipe.transform(value, col.dateFormat);
         break;
       case 'yn':
-        ret = this.ynPipe.transform(value === col.yn.truth, col.yn.yes, col.yn.no);
+        ret = this.ynPipe.transform(value === col.yn!.truth, col.yn!.yes!, col.yn!.no!, col.yn!.mode!);
         break;
     }
     return { text: ret == null ? '' : ret, org: value };
@@ -231,15 +230,16 @@ export class STDataSource {
     const { req, page, pi, ps, singleSort, multiSort, columns } = options;
     const method = (req.method || 'GET').toUpperCase();
     let params = {};
+    const reName = req.reName as STReqReNameType;
     if (req.type === 'page') {
       params = {
-        [req.reName.pi]: page.zeroIndexed ? pi - 1 : pi,
-        [req.reName.ps]: ps,
+        [reName.pi as string]: page.zeroIndexed ? pi - 1 : pi,
+        [reName.ps as string]: ps,
       };
     } else {
       params = {
-        [req.reName.skip]: (pi - 1) * ps,
-        [req.reName.limit]: ps,
+        [reName.skip as string]: (pi - 1) * ps,
+        [reName.limit as string]: ps,
       };
     }
     params = {
@@ -267,15 +267,13 @@ export class STDataSource {
   }
 
   getNoIndex(item: STData, col: STColumn, idx: number): number {
-    return typeof col.noIndex === 'function' ? col.noIndex(item, col, idx) : col.noIndex + idx;
+    return typeof col.noIndex === 'function' ? col.noIndex(item, col, idx) : col.noIndex! + idx;
   }
 
   // #region sort
 
   private getValidSort(columns: STColumn[]): STSortMap[] {
-    return columns
-      .filter(item => item._sort && item._sort.enabled && item._sort.default)
-      .map(item => item._sort);
+    return columns.filter(item => item._sort && item._sort.enabled && item._sort.default).map(item => item._sort);
   }
 
   private getSorterFn(columns: STColumn[]) {
@@ -283,15 +281,19 @@ export class STDataSource {
     if (sortList.length === 0) {
       return;
     }
-    if (typeof sortList[0].compare !== 'function') {
+    const sortItem = sortList[0];
+    if (sortItem.compare === null) {
+      return;
+    }
+    if (typeof sortItem.compare !== 'function') {
       console.warn(`[st] Muse provide the compare function in sort`);
       return;
     }
 
     return (a: STData, b: STData) => {
-      const result = sortList[0].compare(a, b);
+      const result = sortItem.compare!(a, b);
       if (result !== 0) {
-        return sortList[0].default === 'descend' ? -result : result;
+        return sortItem.default === 'descend' ? -result : result;
       }
       return 0;
     };
@@ -302,8 +304,8 @@ export class STDataSource {
   }
 
   getReqSortMap(
-    singleSort: STSingleSort,
-    multiSort: STMultiSort,
+    singleSort: STSingleSort | null | undefined,
+    multiSort: STMultiSort | null | undefined,
     columns: STColumn[],
   ): { [key: string]: string } {
     let ret: { [key: string]: string } = {};
@@ -319,19 +321,20 @@ export class STDataSource {
       };
 
       ret = {
-        [ms.key]: sortList.sort((a, b) => a.tick - b.tick)
-          .map(item => item.key + ms.nameSeparator + ((item.reName || {})[item.default] || item.default))
+        [ms.key]: sortList
+          .sort((a, b) => a.tick - b.tick)
+          .map(item => item.key + ms.nameSeparator + ((item.reName || {})[item.default!] || item.default))
           .join(ms.separator),
       };
     } else {
       const mapData = sortList[0];
       let sortFiled = mapData.key;
-      let sortValue = (sortList[0].reName || {})[mapData.default] || mapData.default;
+      let sortValue = (sortList[0].reName || {})[mapData.default!] || mapData.default;
       if (singleSort) {
         sortValue = sortFiled + (singleSort.nameSeparator || '.') + sortValue;
         sortFiled = singleSort.key || 'sort';
       }
-      ret[sortFiled] = sortValue;
+      ret[sortFiled as string] = sortValue as string;
     }
     return ret;
   }
@@ -345,12 +348,12 @@ export class STDataSource {
     columns
       .filter(w => w.filter && w.filter.default === true)
       .forEach(col => {
-        const values = col.filter.menus.filter(f => f.checked === true);
+        const values = col.filter!.menus.filter(f => f.checked === true);
         let obj: {} = {};
-        if (col.filter.reName) {
-          obj = col.filter.reName(col.filter.menus, col);
+        if (col.filter!.reName) {
+          obj = col.filter!.reName!(col.filter!.menus, col);
         } else {
-          obj[col.filter.key] = values.map(i => i.value).join(',');
+          obj[col.filter!.key!] = values.map(i => i.value).join(',');
         }
         ret = { ...ret, ...obj };
       });
@@ -364,8 +367,7 @@ export class STDataSource {
   private genStatistical(columns: STColumn[], list: STData[], rawData: any): STStatisticalResults {
     const res = {};
     columns.forEach((col, index) => {
-      res[col.key ? col.key : index] =
-        col.statistical == null ? {} : this.getStatistical(col, index, list, rawData);
+      res[col.key ? col.key : index] = col.statistical == null ? {} : this.getStatistical(col, index, list, rawData);
     });
     return res;
   }
@@ -374,7 +376,7 @@ export class STDataSource {
     const val = col.statistical;
     const item: STStatistical = {
       digits: 2,
-      currency: null,
+      currency: undefined,
       ...(typeof val === 'string' ? { type: val as STStatisticalType } : (val as STStatistical)),
     };
     let res: STStatisticalResult = { value: 0 };
@@ -388,16 +390,14 @@ export class STDataSource {
           res.value = list.length;
           break;
         case 'distinctCount':
-          res.value = this.getValues(index, list).filter(
-            (value, idx, self) => self.indexOf(value) === idx,
-          ).length;
+          res.value = this.getValues(index, list).filter((value, idx, self) => self.indexOf(value) === idx).length;
           break;
         case 'sum':
-          res.value = this.toFixed(this.getSum(index, list), item.digits);
+          res.value = this.toFixed(this.getSum(index, list), item.digits!);
           currency = true;
           break;
         case 'average':
-          res.value = this.toFixed(this.getSum(index, list) / list.length, item.digits);
+          res.value = this.toFixed(this.getSum(index, list) / list.length, item.digits!);
           currency = true;
           break;
         case 'max':
@@ -411,7 +411,7 @@ export class STDataSource {
       }
     }
     if (item.currency === true || (item.currency == null && currency === true)) {
-      res.text = this.currentyPipe.transform(res.value);
+      res.text = this.currentyPipe.transform(res.value) as string;
     } else {
       res.text = String(res.value);
     }

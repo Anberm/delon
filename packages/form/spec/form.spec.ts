@@ -5,7 +5,6 @@ import { configureTestSuite, createTestContext } from '@delon/testing';
 import { en_US, AlainThemeModule, DelonLocaleService } from '@delon/theme';
 import { deepCopy } from '@delon/util';
 import { of } from 'rxjs';
-import { FormProperty } from '../src/model/form.property';
 import { FormPropertyFactory } from '../src/model/form.property.factory';
 import { DelonFormModule } from '../src/module';
 import { SFSchema } from '../src/schema/index';
@@ -40,7 +39,7 @@ describe('form: component', () => {
     describe('[default]', () => {
       it('should throw error when parent is not object or array', () => {
         expect(() => {
-          const factory = dl.injector.get(FormPropertyFactory);
+          const factory = dl.injector.get<FormPropertyFactory>(FormPropertyFactory);
           factory.createProperty({}, {}, {}, { type: 'invalid', path: 'a' } as any, 'a');
         }).toThrowError();
       });
@@ -147,6 +146,19 @@ describe('form: component', () => {
         fixture.detectChanges();
         page.checkCount('.sf-btns', 0);
       });
+      it('should be icon', () => {
+        context.button = {
+          submit_icon: {
+            type: 'search',
+          },
+          reset_icon: {
+            type: 'file',
+          },
+        };
+        fixture.detectChanges();
+        page.checkCount('[type="submit"] .anticon', 1);
+        page.checkCount('[type="button"] .anticon', 1);
+      });
       describe('when layout is horizontal', () => {
         it('should be has a fix 100px width', () => {
           page
@@ -180,11 +192,7 @@ describe('form: component', () => {
             },
           };
           fixture.detectChanges();
-          page.checkStyle(
-            '.sf-btns .ant-form-item-control-wrapper',
-            'margin-left',
-            `${spanLabelFixed}px`,
-          );
+          page.checkStyle('.sf-btns .ant-form-item-control-wrapper', 'margin-left', `${spanLabelFixed}px`);
         });
       });
       describe('#size', () => {
@@ -238,7 +246,7 @@ describe('form: component', () => {
       describe('#reset', () => {
         it('should be set default value', () => {
           const schema = deepCopy(SCHEMA.user) as SFSchema;
-          schema.properties.name.default = 'cipchk';
+          schema.properties!.name.default = 'cipchk';
           page
             .newSchema(schema)
             .reset()
@@ -325,6 +333,21 @@ describe('form: component', () => {
         });
       });
 
+      it('#loading', () => {
+        context.loading = false;
+        fixture.detectChanges();
+        const CLS = {
+          loading: '.ant-btn-primary.ant-btn-loading',
+          disabled: '.ant-btn-default[disabled]',
+        };
+        page.checkCount(CLS.loading, 0);
+        page.checkCount(CLS.disabled, 0);
+        context.loading = true;
+        fixture.detectChanges();
+        page.checkCount(CLS.loading, 1);
+        page.checkCount(CLS.disabled, 1);
+      });
+
       it('#formChange', () => {
         page.setValue('/name', 'cipchk');
         expect(context.formChange).toHaveBeenCalled();
@@ -383,7 +406,7 @@ describe('form: component', () => {
       });
       it('#getValue', () => {
         const name = 'asdf';
-        page.newSchema({ properties: { name: { type: 'string' } } }, null, { name });
+        page.newSchema({ properties: { name: { type: 'string' } } }, null!, { name });
         expect(context.comp.getValue('/name')).toBe(name);
       });
       it('#setValue', () => {
@@ -405,9 +428,7 @@ describe('form: component', () => {
             a: {
               type: 'string',
               ui: {
-                validator: jasmine
-                  .createSpy()
-                  .and.returnValue([{ keyword: 'required', message: 'a' }]),
+                validator: jasmine.createSpy().and.returnValue([{ keyword: 'required', message: 'a' }]),
               },
             },
           },
@@ -421,9 +442,7 @@ describe('form: component', () => {
             a: {
               type: 'string',
               ui: {
-                validator: jasmine
-                  .createSpy()
-                  .and.returnValue([]),
+                validator: jasmine.createSpy().and.returnValue([]),
               },
             },
           },
@@ -437,9 +456,7 @@ describe('form: component', () => {
             a: {
               type: 'string',
               ui: {
-                validator: jasmine
-                  .createSpy()
-                  .and.returnValue(of([{ keyword: 'required', message: 'a' }])),
+                validator: jasmine.createSpy().and.returnValue(of([{ keyword: 'required', message: 'a' }])),
               },
             },
           },
@@ -454,9 +471,7 @@ describe('form: component', () => {
               a: {
                 type: 'string',
                 ui: {
-                  validator: jasmine
-                    .createSpy()
-                    .and.returnValue([{ keyword: 'required' }]),
+                  validator: jasmine.createSpy().and.returnValue([{ keyword: 'required' }]),
                 },
               },
             },
@@ -470,19 +485,21 @@ describe('form: component', () => {
             a: {
               type: 'string',
               ui: {
-                validator: () => [{
-                  keyword: 'a',
-                  message: 'a-{id}-{invalid}',
-                  params: {
-                    id: 10,
+                validator: () => [
+                  {
+                    keyword: 'a',
+                    message: 'a-{id}-{invalid}',
+                    params: {
+                      id: 10,
+                    },
                   },
-                }],
+                ],
               },
             },
           },
         };
         page.newSchema(s);
-        expect(page.getProperty('/a').errors[0].message).toBe(`a-10-`);
+        expect(page.getProperty('/a').errors![0].message).toBe(`a-10-`);
       });
     });
 
@@ -502,7 +519,7 @@ describe('form: component', () => {
           required: ['a'],
         };
         page.newSchema(s);
-        expect(page.getProperty('/a').errors[0].message).toBe('REQUEST');
+        expect(page.getProperty('/a').errors![0].message).toBe('REQUEST');
       });
 
       it('shoule be re-error message via error property and type is function', () => {
@@ -520,8 +537,8 @@ describe('form: component', () => {
           required: ['a'],
         };
         page.newSchema(s);
-        expect(page.getProperty('/a').errors[0].message).toBe('A');
-        expect((s.properties.a.ui as any).errors.required).toHaveBeenCalled();
+        expect(page.getProperty('/a').errors![0].message).toBe('A');
+        expect((s.properties!.a.ui as any).errors.required).toHaveBeenCalled();
       });
     });
   });
@@ -531,12 +548,12 @@ describe('form: component', () => {
     it('should be auto 搜索 in submit', () => {
       context.mode = 'search';
       createComp();
-      expect(page.getEl('.ant-btn-primary').textContent).toBe('搜索');
+      expect(page.getEl('.ant-btn-primary').textContent).toContain('搜索');
     });
     it('should be auto 保存 in submit', () => {
       context.mode = 'edit';
       createComp();
-      expect(page.getEl('.ant-btn-primary').textContent).toBe('保存');
+      expect(page.getEl('.ant-btn-primary').textContent).toContain('保存');
     });
     it('should be custom text of search', () => {
       context.mode = 'search';
@@ -544,7 +561,7 @@ describe('form: component', () => {
         search: 'SEARCH',
       };
       createComp();
-      expect(page.getEl('.ant-btn-primary').textContent).toBe('SEARCH');
+      expect(page.getEl('.ant-btn-primary').textContent).toContain('SEARCH');
     });
     it('should be custom text of edit', () => {
       context.mode = 'edit';
@@ -552,14 +569,14 @@ describe('form: component', () => {
         edit: 'SAVE',
       };
       createComp();
-      expect(page.getEl('.ant-btn-primary').textContent).toBe('SAVE');
+      expect(page.getEl('.ant-btn-primary').textContent).toContain('SAVE');
     });
   });
 });
 
 @Component({
   template: `
-    <sf [layout]="layout" #comp [schema]="schema" [ui]="ui" [button]="button" [mode]="mode"></sf>
+    <sf [layout]="layout" #comp [schema]="schema" [ui]="ui" [button]="button" [mode]="mode" [loading]="loading"></sf>
   `,
 })
 class TestModeComponent extends TestFormComponent {}

@@ -29,14 +29,7 @@ import {
   ModalHelper,
   YNPipe,
 } from '@delon/theme';
-import {
-  deepMerge,
-  deepMergeKey,
-  toBoolean,
-  updateHostClass,
-  InputBoolean,
-  InputNumber,
-} from '@delon/util';
+import { deepMerge, deepMergeKey, toBoolean, updateHostClass, InputBoolean, InputNumber } from '@delon/util';
 import { of, Observable, Subject } from 'rxjs';
 import { filter, takeUntil } from 'rxjs/operators';
 
@@ -63,21 +56,14 @@ import {
   STRowClassName,
   STSingleSort,
   STStatisticalResults,
+  STWidthMode,
 } from './table.interfaces';
 
 @Component({
   selector: 'st',
+  exportAs: 'st',
   templateUrl: './table.component.html',
-  providers: [
-    STDataSource,
-    STRowSource,
-    STColumnSource,
-    STExport,
-    CNCurrencyPipe,
-    DatePipe,
-    YNPipe,
-    DecimalPipe,
-  ],
+  providers: [STDataSource, STRowSource, STColumnSource, STExport, CNCurrencyPipe, DatePipe, YNPipe, DecimalPipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class STComponent implements AfterViewInit, OnChanges, OnDestroy {
@@ -142,8 +128,9 @@ export class STComponent implements AfterViewInit, OnChanges, OnDestroy {
     this._page = item;
   }
   private _page: STPage;
+  _loading = false;
   /** 是否显示Loading */
-  @Input() @InputBoolean() loading = false;
+  @Input() loading: boolean | null = null;
   /** 延迟显示加载效果的时间（防止闪烁） */
   @Input() @InputNumber() loadingDelay = 0;
   /** 是否显示边框 */
@@ -157,8 +144,8 @@ export class STComponent implements AfterViewInit, OnChanges, OnDestroy {
    * - 若不指定，则返回：`columnName=ascend|descend`
    * - 若指定，则返回：`sort=columnName.(ascend|descend)`
    */
-  @Input() singleSort: STSingleSort = null;
-  private _multiSort: STMultiSort;
+  @Input() singleSort: STSingleSort | null = null;
+  private _multiSort: STMultiSort | null;
   /** 是否多排序，当 `sort` 多个相同值时自动合并，建议后端支持时使用 */
   @Input()
   get multiSort() {
@@ -174,6 +161,14 @@ export class STComponent implements AfterViewInit, OnChanges, OnDestroy {
     };
   }
   @Input() rowClassName: STRowClassName;
+  @Input()
+  set widthMode(value: STWidthMode) {
+    this._widthMode = { type: 'default', strictBehavior: 'truncate', ...value };
+  }
+  get widthMode() {
+    return this._widthMode;
+  }
+  private _widthMode: STWidthMode;
   /** `header` 标题 */
   @Input() header: string | TemplateRef<void>;
   /** `footer` 底部 */
@@ -189,6 +184,7 @@ export class STComponent implements AfterViewInit, OnChanges, OnDestroy {
   @Input() widthConfig: string[];
   /** 行单击多少时长之类为双击（单位：毫秒），默认：`200` */
   @Input() @InputNumber() rowClickTime = 200;
+  @Input() @InputBoolean() responsive: boolean = true;
   @Input() @InputBoolean() responsiveHideHeaderFooter: boolean;
   /** 请求异常时回调 */
   @Output() readonly error = new EventEmitter<STError>();
@@ -251,6 +247,14 @@ export class STComponent implements AfterViewInit, OnChanges, OnDestroy {
       : '';
   }
 
+  isTruncate(column: STColumn): boolean {
+    return !!column.width && this.widthMode.strictBehavior === 'truncate';
+  }
+
+  columnClass(column: STColumn): string | null {
+    return column.className || (this.isTruncate(column) ? 'text-truncate' : null);
+  }
+
   private changeEmit(type: STChangeType, data?: any) {
     const res: STChange = {
       type,
@@ -271,9 +275,15 @@ export class STComponent implements AfterViewInit, OnChanges, OnDestroy {
 
   // #region data
 
-  private _load() {
+  private setLoading(val: boolean): void {
+    if (this.loading == null) {
+      this._loading = val;
+    }
+  }
+
+  private _load(): Promise<this> {
     const { pi, ps, data, req, res, page, total, singleSort, multiSort, rowClassName } = this;
-    this.loading = true;
+    this.setLoading(true);
     return this.dataSource
       .process({
         pi,
@@ -289,7 +299,7 @@ export class STComponent implements AfterViewInit, OnChanges, OnDestroy {
         rowClassName,
       })
       .then(result => {
-        this.loading = false;
+        this.setLoading(false);
         if (typeof result.pi !== 'undefined') {
           this.pi = result.pi;
         }
@@ -302,19 +312,21 @@ export class STComponent implements AfterViewInit, OnChanges, OnDestroy {
         if (typeof result.pageShow !== 'undefined') {
           this._isPagination = result.pageShow;
         }
-        this._data = result.list;
-        this._statistical = result.statistical;
+        this._data = result.list as STData[];
+        this._statistical = result.statistical as STStatisticalResults;
         return this._data;
       })
       .then(() => this._refCheck())
       .catch(error => {
-        this.loading = false;
+        this.setLoading(false);
+        this.cdr.detectChanges();
         this.error.emit({ type: 'req', error });
+        return this;
       });
   }
 
   /** 清空所有数据 */
-  clear(cleanStatus = true) {
+  clear(cleanStatus = true): this {
     if (cleanStatus) {
       this.clearStatus();
     }
@@ -323,7 +335,7 @@ export class STComponent implements AfterViewInit, OnChanges, OnDestroy {
   }
 
   /** 清空所有状态 */
-  clearStatus() {
+  clearStatus(): this {
     return this.clearCheck()
       .clearRadio()
       .clearFilter()
@@ -340,8 +352,7 @@ export class STComponent implements AfterViewInit, OnChanges, OnDestroy {
   load(pi = 1, extraParams?: {}, options?: STLoadOptions) {
     if (pi !== -1) this.pi = pi;
     if (typeof extraParams !== 'undefined') {
-      this._req.params =
-        options && options.merge ? { ...this._req.params, ...extraParams } : extraParams;
+      this._req.params = options && options.merge ? { ...this._req.params, ...extraParams } : extraParams;
     }
     this._change('pi');
     return this;
@@ -373,25 +384,26 @@ export class STComponent implements AfterViewInit, OnChanges, OnDestroy {
     if (!this.page.toTop) return;
     const el = this.el.nativeElement as HTMLElement;
     if (this.scroll) {
-      el.querySelector('.ant-table-body').scrollTo(0, 0);
+      el.querySelector('.ant-table-body')!.scrollTo(0, 0);
       return;
     }
     el.scrollIntoView();
     // fix header height
-    this.doc.documentElement.scrollTop -= this.page.toTopOffset;
+    this.doc.documentElement.scrollTop -= this.page.toTopOffset!;
   }
 
   _change(type: 'pi' | 'ps') {
-    this._load().then(() => {
-      this._toTop();
-    });
+    if (type === 'pi' || (type === 'ps' && this.pi <= Math.ceil(this.total / this.ps))) {
+      this._load().then(() => this._toTop());
+    }
+
     this.changeEmit(type);
   }
 
   _click(e: Event, item: STData, col: STColumn) {
     e.preventDefault();
     e.stopPropagation();
-    const res = col.click(item, this);
+    const res = col.click!(item, this);
     if (typeof res === 'string') {
       this.router.navigateByUrl(res, { state: this.routerState });
     }
@@ -402,7 +414,7 @@ export class STComponent implements AfterViewInit, OnChanges, OnDestroy {
   _rowClick(e: Event, item: STData, index: number) {
     if ((e.target as HTMLElement).nodeName === 'INPUT') return;
     const { expand, expandRowByClick, rowClickTime } = this;
-    if (!!expand && expandRowByClick) {
+    if (!!expand && item.showExpand !== false && expandRowByClick) {
       item.expand = !item.expand;
       this.changeEmit('expand', item);
       return;
@@ -438,7 +450,11 @@ export class STComponent implements AfterViewInit, OnChanges, OnDestroy {
     // recalculate no
     this._columns
       .filter(w => w.type === 'no')
-      .forEach(c => this._data.forEach((i, idx) => (i._values[c.__point] = { text: this.dataSource.getNoIndex(i, c, idx), org: idx })));
+      .forEach(c =>
+        this._data.forEach(
+          (i, idx) => (i._values[c.__point] = { text: this.dataSource.getNoIndex(i, c, idx), org: idx }),
+        ),
+      );
 
     return this.cd();
   }
@@ -473,7 +489,7 @@ export class STComponent implements AfterViewInit, OnChanges, OnDestroy {
   // #region filter
 
   private handleFilter(col: STColumn) {
-    col.filter.default = col.filter.menus.findIndex(w => w.checked) !== -1;
+    col.filter!.default = col.filter!.menus.findIndex(w => w.checked!) !== -1;
     this._load();
     this.changeEmit('filter', col);
   }
@@ -483,12 +499,12 @@ export class STComponent implements AfterViewInit, OnChanges, OnDestroy {
   }
 
   _filterClear(col: STColumn) {
-    col.filter.menus.forEach(i => (i.checked = false));
+    col.filter!.menus.forEach(i => (i.checked = false));
     this.handleFilter(col);
   }
 
   _filterRadio(col: STColumn, item: STColumnFilterMenu, checked: boolean) {
-    col.filter.menus.forEach(i => (i.checked = false));
+    col.filter!.menus.forEach(i => (i.checked = false));
     item.checked = checked;
   }
 
@@ -496,8 +512,8 @@ export class STComponent implements AfterViewInit, OnChanges, OnDestroy {
     this._columns
       .filter(w => w.filter && w.filter.default === true)
       .forEach(col => {
-        col.filter.default = false;
-        col.filter.menus.forEach(f => (f.checked = false));
+        col.filter!.default = false;
+        col.filter!.menus.forEach(f => (f.checked = false));
       });
     return this;
   }
@@ -567,17 +583,13 @@ export class STComponent implements AfterViewInit, OnChanges, OnDestroy {
 
   // #region buttons
 
-  _btnClick(e: Event, record: STData, btn: STColumnButton) {
-    if (e) {
-      e.stopPropagation();
-      e.preventDefault();
-    }
+  _btnClick(record: STData, btn: STColumnButton) {
     if (btn.type === 'modal' || btn.type === 'static') {
       const { modal } = btn;
-      const obj = { [modal.paramsName]: record };
+      const obj = { [modal!.paramsName!]: record };
       (this.modalHelper[btn.type === 'modal' ? 'create' : 'createStatic'] as any)(
-        modal.component,
-        { ...obj, ...(modal.params && modal.params(record)) },
+        modal!.component,
+        { ...obj, ...(modal!.params && modal!.params!(record)) },
         deepMergeKey({}, true, this.copyCog.modal, modal),
       )
         .pipe(filter(w => typeof w !== 'undefined'))
@@ -585,12 +597,12 @@ export class STComponent implements AfterViewInit, OnChanges, OnDestroy {
       return;
     } else if (btn.type === 'drawer') {
       const { drawer } = btn;
-      const obj = { [drawer.paramsName]: record };
+      const obj = { [drawer!.paramsName!]: record };
       this.drawerHelper
         .create(
-          drawer.title,
-          drawer.component,
-          { ...obj, ...(drawer.params && drawer.params(record)) },
+          drawer!.title!,
+          drawer!.component,
+          { ...obj, ...(drawer!.params && drawer!.params!(record)) },
           deepMergeKey({}, true, this.copyCog.drawer, drawer),
         )
         .pipe(filter(w => typeof w !== 'undefined'))
@@ -628,7 +640,7 @@ export class STComponent implements AfterViewInit, OnChanges, OnDestroy {
   }
 
   _validBtns(item: STData, col: STColumn): STColumnButton[] {
-    return col.buttons.filter(btn => btn.iif(item, btn, col));
+    return col.buttons!.filter(btn => btn.iif!(item, btn, col));
   }
 
   // #endregion
@@ -664,9 +676,13 @@ export class STComponent implements AfterViewInit, OnChanges, OnDestroy {
   }
 
   private setClass() {
+    const { type, strictBehavior } = this.widthMode;
     updateHostClass(this.el.nativeElement, this.renderer, {
       [`st`]: true,
       [`st__p-${this.page.placement}`]: this.page.placement,
+      [`st__width-${type}`]: true,
+      [`st__width-strict-${strictBehavior}`]: type === 'strict',
+      [`ant-table-rep`]: this.responsive,
       [`ant-table-rep__hide-header-footer`]: this.responsiveHideHeaderFooter,
     });
   }
@@ -681,6 +697,9 @@ export class STComponent implements AfterViewInit, OnChanges, OnDestroy {
     }
     if (changes.data && changes.data.currentValue) {
       this._load();
+    }
+    if (changes.loading) {
+      this._loading = changes.loading.currentValue;
     }
     this.setClass();
   }

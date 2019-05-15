@@ -1,15 +1,9 @@
-import {
-  ChangeDetectionStrategy,
-  ChangeDetectorRef,
-  Component,
-  Input,
-  OnChanges,
-  TemplateRef,
-} from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnChanges, TemplateRef } from '@angular/core';
 import { InputBoolean } from '@delon/util';
 
 @Component({
   selector: 'g2-card',
+  exportAs: 'g2Card',
   templateUrl: './card.component.html',
   host: { '[class.g2-card]': 'true' },
   changeDetection: ChangeDetectionStrategy.OnPush,

@@ -56,16 +56,16 @@ function buildSelector(schema: CommonSchema, projectPrefix: string) {
     ret.push(...schema.target.split('/'));
   }
   // name
-  ret.push(strings.dasherize(schema.name));
+  ret.push(strings.dasherize(schema.name!));
   return ret.join('-');
 }
 
-function buildComponentName(schema: CommonSchema, projectPrefix: string) {
-  const ret: string[] = [schema.module];
+function buildComponentName(schema: CommonSchema, _projectPrefix: string) {
+  const ret: string[] = [schema.module!];
   if (schema.target && schema.target.length > 0) {
     ret.push(...schema.target.split('/'));
   }
-  ret.push(schema.name);
+  ret.push(schema.name!);
   ret.push(`Component`);
   return strings.classify(ret.join('-'));
 }
@@ -76,9 +76,7 @@ function resolveSchema(host: Tree, project: Project, schema: CommonSchema) {
   }
   // module name
   if (!schema.module) {
-    throw new SchematicsException(
-      `Must specify module name. (e.g: ng g ng-alain:list <list name> -m=<module name>)`,
-    );
+    throw new SchematicsException(`Must specify module name. (e.g: ng g ng-alain:list <list name> -m=<module name>)`);
   }
   // path
   if (schema.path === undefined) {
@@ -88,7 +86,7 @@ function resolveSchema(host: Tree, project: Project, schema: CommonSchema) {
 
   schema.path += `/${schema.module}`;
 
-  const parsedPath = parseName(schema.path, schema.name);
+  const parsedPath = parseName(schema.path, schema.name!);
   schema.name = parsedPath.name;
   schema.path = parsedPath.path;
   schema.importModulePath = findModuleFromOptions(host, schema as any);
@@ -97,11 +95,10 @@ function resolveSchema(host: Tree, project: Project, schema: CommonSchema) {
     schema.path += '/' + schema.target;
   }
 
-  schema.routerModulePath = schema.importModulePath.replace('.module.ts', '-routing.module.ts');
+  schema.routerModulePath = schema.importModulePath!.replace('.module.ts', '-routing.module.ts');
 
   // html selector
-  schema.selector =
-    schema.selector || buildSelector(schema, (project as any).prefix);
+  schema.selector = schema.selector || buildSelector(schema, (project as any).prefix);
 
   validateName(schema.name);
   validateHtmlSelector(schema.selector);
@@ -135,9 +132,9 @@ export function addValueToVariable(host: Tree, path: string, variableName: strin
 }
 
 function getRelativePath(path: string, schema: CommonSchema) {
-  const importPath = `/${schema.path}/${
-    schema.flat ? '' : strings.dasherize(schema.name) + '/'
-  }${strings.dasherize(schema.name)}.component`;
+  const importPath = `/${schema.path}/${schema.flat ? '' : strings.dasherize(schema.name!) + '/'}${strings.dasherize(
+    schema.name!,
+  )}.component`;
   return buildRelativePath(path, importPath);
 }
 
@@ -150,26 +147,26 @@ function addDeclaration(schema: CommonSchema) {
     // imports
     addImportToModule(
       host,
-      schema.importModulePath,
-      schema.componentName,
-      getRelativePath(schema.importModulePath, schema),
+      schema.importModulePath!,
+      schema.componentName!,
+      getRelativePath(schema.importModulePath!, schema),
     );
 
     // component
     if (schema.modal === true) {
-      addValueToVariable(host, schema.importModulePath, 'COMPONENTS_NOROUNT', schema.componentName);
+      addValueToVariable(host, schema.importModulePath!, 'COMPONENTS_NOROUNT', schema.componentName!);
     } else {
-      addValueToVariable(host, schema.importModulePath, 'COMPONENTS', schema.componentName);
+      addValueToVariable(host, schema.importModulePath!, 'COMPONENTS', schema.componentName!);
       // routing
       addImportToModule(
         host,
-        schema.routerModulePath,
-        schema.componentName,
-        getRelativePath(schema.routerModulePath, schema),
+        schema.routerModulePath!,
+        schema.componentName!,
+        getRelativePath(schema.routerModulePath!, schema),
       );
       addValueToVariable(
         host,
-        schema.routerModulePath,
+        schema.routerModulePath!,
         'routes',
         `{ path: '${schema.name}', component: ${schema.componentName} }`,
       );
@@ -190,7 +187,7 @@ export function buildAlain(schema: CommonSchema): Rule {
     // Don't support inline
     schema.inlineTemplate = false;
 
-    const templateSource = apply(url(schema._filesPath), [
+    const templateSource = apply(url(schema._filesPath!), [
       filter(path => !path.endsWith('.DS_Store')),
       schema.spec ? noop() : filter(path => !path.endsWith('.spec.ts')),
       schema.inlineStyle ? filter(path => !path.endsWith('.__styleext__')) : noop(),
@@ -200,13 +197,10 @@ export function buildAlain(schema: CommonSchema): Rule {
         'if-flat': (s: string) => (schema.flat ? '' : s),
         ...schema,
       }),
-      move(null, schema.path + '/'),
+      move(null!, schema.path + '/'),
     ]);
 
-    return chain([branchAndMerge(chain([addDeclaration(schema), mergeWith(templateSource)]))])(
-      host,
-      context,
-    );
+    return chain([branchAndMerge(chain([addDeclaration(schema), mergeWith(templateSource)]))])(host, context);
   };
 }
 

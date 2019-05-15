@@ -15,8 +15,9 @@ import { ErrorCollectConfig } from './error-collect.config';
 
 @Component({
   selector: 'error-collect, [error-collect]',
+  exportAs: 'errorCollect',
   template: `
-    <i nz-icon type="exclamation-circle"></i>
+    <i nz-icon nzType="exclamation-circle"></i>
     <span class="pl-sm">{{ count }}</span>
   `,
   host: {
@@ -25,11 +26,10 @@ import { ErrorCollectConfig } from './error-collect.config';
     '(click)': '_click()',
   },
   changeDetection: ChangeDetectionStrategy.OnPush,
-  exportAs: 'errorCollect',
 })
 export class ErrorCollectComponent implements OnInit, OnDestroy {
-  private $time = null;
-  private formEl: HTMLFormElement;
+  private $time: any | null = null;
+  private formEl: HTMLFormElement | null;
 
   @Input() @InputNumber() freq: number;
   @Input() @InputNumber() offsetTop: number;
@@ -48,7 +48,7 @@ export class ErrorCollectComponent implements OnInit, OnDestroy {
   }
 
   private get errEls() {
-    return this.formEl.querySelectorAll('.has-error');
+    return this.formEl!.querySelectorAll('.has-error');
   }
 
   private update() {
@@ -76,19 +76,19 @@ export class ErrorCollectComponent implements OnInit, OnDestroy {
   }
 
   private uninstall() {
-    clearInterval(this.$time);
+    clearInterval(this.$time!);
   }
 
   private findParent(el: Element, selector: string) {
-    let retEl = null;
+    let retEl: HTMLElement | null = null;
     while (el) {
       if (el.querySelector(selector)) {
-        retEl = el;
+        retEl = el as HTMLElement;
         break;
       }
-      el = el.parentElement;
+      el = el.parentElement as HTMLElement;
     }
-    return retEl;
+    return retEl as HTMLFormElement | null;
   }
 
   ngOnInit() {

@@ -7,7 +7,7 @@ export const USERS = {
   // 支持值为 Object 和 Array
   'GET /users': (req: MockRequest) => {
     const total = req.queryString.total || 100;
-    const res = {
+    const res: any = {
       list: [],
       total,
     };
@@ -23,8 +23,8 @@ export const USERS = {
           last: `last-${r(1, 10)}`,
           first: `first-${r(10, 20)}`,
         },
-        nat: [ 'CH', 'US', 'DE' ][i % 3],
-        gender: [ 'male', 'female' ][i % 2],
+        nat: ['CH', 'US', 'DE'][i % 3],
+        gender: ['male', 'female'][i % 2],
         email: `aaa${r(1, 10)}@qq.com`,
         phone: `phone-${r(1000, 100000)}`,
         price: r(10, 10000000),

@@ -10,7 +10,6 @@ describe('form: widget: number', () => {
   let dl: DebugElement;
   let context: TestFormComponent;
   let page: SFPage;
-  const widget = 'number';
 
   configureSFTestSuite();
 
@@ -123,14 +122,13 @@ describe('form: widget: number', () => {
       property.setValue(null, true);
       page.typeChar(null);
       expect(ipt.value).toBe('');
-
     }));
 
     it('#formatter & #parser', fakeAsync(() => {
       const s: SFSchema = {
         properties: { a: { type: 'number', default: 1 } },
       };
-      const ui = (s.properties.a.ui = {
+      const ui = (s.properties!.a.ui = {
         formatter: jasmine.createSpy('formatter'),
         parser: jasmine.createSpy('parser'),
       });

@@ -16,7 +16,7 @@ import {
 import { NodePackageInstallTask } from '@angular-devkit/schematics/tasks';
 import * as path from 'path';
 
-import { getLangConfig, getLangData } from '../core/lang.config';
+import { getLangData } from '../core/lang.config';
 import { tryAddFile } from '../utils/alain';
 import { HMR_CONTENT } from '../utils/contents';
 import { addFiles } from '../utils/file';
@@ -64,7 +64,7 @@ function fixMain() {
 }
 
 function addDependenciesToPackageJson(options: ApplicationOptions) {
-  return (host: Tree, context: SchematicContext) => {
+  return (host: Tree) => {
     // 3rd
     addPackageToPackageJson(host, [
       // allow ignore ng-zorro-antd becauce of @delon/theme dependency
@@ -78,9 +78,7 @@ function addDependenciesToPackageJson(options: ApplicationOptions) {
     // @delon/*
     addPackageToPackageJson(
       host,
-      ['abc', 'acl', 'auth', 'cache', 'form', 'mock', 'theme', 'util', 'chart'].map(
-        pkg => `@delon/${pkg}@${VERSION}`,
-      ),
+      ['abc', 'acl', 'auth', 'cache', 'form', 'mock', 'theme', 'util', 'chart'].map(pkg => `@delon/${pkg}@${VERSION}`),
     );
     // ng-alain
     addPackageToPackageJson(
@@ -106,7 +104,7 @@ function addDependenciesToPackageJson(options: ApplicationOptions) {
 }
 
 function addRunScriptToPackageJson() {
-  return (host: Tree, context: SchematicContext) => {
+  return (host: Tree) => {
     const json = getPackage(host, 'scripts');
     if (json == null) return host;
     json.scripts.start = `npm run color-less && ng serve -o`;
@@ -121,7 +119,7 @@ function addRunScriptToPackageJson() {
 }
 
 function addPathsToTsConfig() {
-  return (host: Tree, context: SchematicContext) => {
+  return (host: Tree) => {
     [
       {
         path: 'tsconfig.json',
@@ -154,12 +152,12 @@ function addPathsToTsConfig() {
 }
 
 function addCodeStylesToPackageJson() {
-  return (host: Tree, context: SchematicContext) => {
+  return (host: Tree) => {
     const json = getPackage(host);
     if (json == null) return host;
     json.scripts.lint = `npm run lint:ts && npm run lint:style`;
     json.scripts['lint:ts'] = `tslint -p src/tsconfig.app.json -c tslint.json 'src/**/*.ts'`;
-    json.scripts['lint:style'] = `stylelint \"{src}/**/*.less\" --syntax less`;
+    json.scripts['lint:style'] = `stylelint 'src/**/*.less' --syntax less`;
     json.scripts['lint-staged'] = `lint-staged`;
     json.scripts['tslint-check'] = `tslint-config-prettier-check ./tslint.json`;
     json['lint-staged'] = {
@@ -221,7 +219,7 @@ function addCodeStylesToPackageJson() {
 }
 
 function addSchematics() {
-  return (host: Tree, context: SchematicContext) => {
+  return (host: Tree) => {
     const angularJsonFile = 'angular.json';
     const json = getJSON(host, angularJsonFile, 'schematics');
     if (json == null) return host;
@@ -264,12 +262,12 @@ function addSchematics() {
 }
 
 function forceLess() {
-  return (host: Tree, context: SchematicContext) => {
-    scriptsToAngularJson(host, ['src/styles.less'], 'add', ['build'], null, true);
+  return (host: Tree) => {
+    scriptsToAngularJson(host, ['src/styles.less'], 'add', ['build'], null!, true);
   };
 }
 
-function addStyle(options: ApplicationOptions) {
+function addStyle() {
   return (host: Tree) => {
     addHeadStyle(
       host,
@@ -309,7 +307,7 @@ function mergeFiles(options: ApplicationOptions, from: string, to: string) {
   );
 }
 
-function addCliTpl(options: ApplicationOptions) {
+function addCliTpl() {
   const TPLS = {
     '__name@dasherize__.component.html': `<page-header></page-header>`,
     '__name@dasherize__.component.ts': `import { Component, OnInit<% if(!!viewEncapsulation) { %>, ViewEncapsulation<% }%><% if(changeDetection !== 'Default') { %>, ChangeDetectionStrategy<% }%> } from '@angular/core';
@@ -407,7 +405,7 @@ function addFilesToRoot(options: ApplicationOptions) {
 function fixLang(options: ApplicationOptions) {
   return (host: Tree) => {
     if (options.i18n) return;
-    const langs = getLangData(options.defaultLanguage);
+    const langs = getLangData(options.defaultLanguage!);
     if (!langs) return;
 
     console.log(`Translating, please wait...`);
@@ -421,34 +419,32 @@ function fixLang(options: ApplicationOptions) {
 }
 
 function fixLangInHtml(host: Tree, p: string, langs: {}) {
-  let html = host.get(p).content.toString('utf8');
+  let html = host.get(p)!.content.toString('utf8');
   let matchCount = 0;
   // {{(status ? 'menu.fullscreen.exit' : 'menu.fullscreen') | translate }}
-  html = html.replace(
-    /\{\{\(status \? '([^']+)' : '([^']+)'\) \| translate \}\}/g,
-    (word, key1, key2) => {
-      ++matchCount;
-      return `{{ status ? '${langs[key1] || key1}' : '${langs[key2] || key2}' }}`;
-    },
-  );
+  // {{ (status ? 'menu.fullscreen.exit' : 'menu.fullscreen') | translate }}
+  html = html.replace(/\{\{[ ]?\(status \? '([^']+)' : '([^']+)'\) \| translate \}\}/g, (_word, key1, key2) => {
+    ++matchCount;
+    return `{{ status ? '${langs[key1] || key1}' : '${langs[key2] || key2}' }}`;
+  });
   // {{ 'app.register-result.msg' | translate:params }}
-  html = html.replace(/\{\{[ ]?'([^']+)'[ ]? \| translate:[^ ]+ \}\}/g, (word, key) => {
+  html = html.replace(/\{\{[ ]?'([^']+)'[ ]? \| translate:[^ ]+ \}\}/g, (_word, key) => {
     ++matchCount;
     return langs[key] || key;
   });
   // {{ 'Please enter mobile number!' | translate }}
-  html = html.replace(/\{\{[ ]?'([^']+)' \| translate[ ]?\}\}/g, (word, key) => {
+  html = html.replace(/\{\{[ ]?'([^']+)' \| translate[ ]?\}\}/g, (_word, key) => {
     ++matchCount;
     return langs[key] || key;
   });
   // [nzTitle]="'app.login.tab-login-credentials' | translate"
-  html = html.replace(/'([^']+)' \| translate[ ]?/g, (word, key) => {
+  html = html.replace(/'([^']+)' \| translate[ ]?/g, (_word, key) => {
     ++matchCount;
     const value = langs[key] || key;
     return `'${value}'`;
   });
   // 'app.register.get-verification-code' | translate
-  html = html.replace(/'([^']+)' \| translate/g, (word, key) => {
+  html = html.replace(/'([^']+)' \| translate/g, (_word, key) => {
     ++matchCount;
     return langs[key] || key;
   });
@@ -462,21 +458,21 @@ function fixLangInHtml(host: Tree, p: string, langs: {}) {
   }
 }
 
-function fixVsCode(options: ApplicationOptions) {
+function fixVsCode() {
   return (host: Tree) => {
     const filePath = '.vscode/extensions.json';
     let json = getJSON(host, filePath);
     if (json == null) {
       host.create(filePath, '');
-      json = { };
+      json = {};
     }
-    json.recommendations = [ 'cipchk.ng-alain-extension-pack' ];
+    json.recommendations = ['cipchk.ng-alain-extension-pack'];
     overwriteJSON(host, filePath, json);
   };
 }
 
 function installPackages() {
-  return (host: Tree, context: SchematicContext) => {
+  return (_host: Tree, context: SchematicContext) => {
     console.log(`Start installing dependencies, please wait...`);
 
     context.addTask(new NodePackageInstallTask());
@@ -499,12 +495,12 @@ export default function(options: ApplicationOptions): Rule {
       // files
       removeOrginalFiles(),
       addFilesToRoot(options),
-      addCliTpl(options),
+      addCliTpl(),
       fixMain(),
       forceLess(),
-      addStyle(options),
+      addStyle(),
       fixLang(options),
-      fixVsCode(options),
+      fixVsCode(),
       installPackages(),
     ])(host, context);
   };

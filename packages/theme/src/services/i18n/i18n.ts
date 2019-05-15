@@ -30,13 +30,10 @@ export interface AlainI18NService {
   readonly change: Observable<string>;
 }
 
-export const ALAIN_I18N_TOKEN = new InjectionToken<AlainI18NService>(
-  'alainTranslatorToken',
-  {
-    providedIn: 'root',
-    factory: ALAIN_I18N_TOKEN_FACTORY,
-  },
-);
+export const ALAIN_I18N_TOKEN = new InjectionToken<AlainI18NService>('alainTranslatorToken', {
+  providedIn: 'root',
+  factory: ALAIN_I18N_TOKEN_FACTORY,
+});
 
 export function ALAIN_I18N_TOKEN_FACTORY() {
   return new AlainI18NServiceFake();
@@ -44,10 +41,10 @@ export function ALAIN_I18N_TOKEN_FACTORY() {
 
 @Injectable({ providedIn: 'root' })
 export class AlainI18NServiceFake implements AlainI18NService {
-  private change$ = new BehaviorSubject<string>(null);
+  private change$ = new BehaviorSubject<string | null>(null);
 
   get change(): Observable<string> {
-    return this.change$.asObservable().pipe(filter(w => w != null));
+    return this.change$.asObservable().pipe(filter(w => w != null)) as Observable<string>;
   }
 
   use(lang: string): void {

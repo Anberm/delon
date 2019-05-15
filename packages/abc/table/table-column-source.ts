@@ -39,9 +39,9 @@ export class STColumnSource {
           item.modal = {
             component: item.component,
             params: item.params,
-            paramsName: item.paramName || modal.paramsName,
-            size: item.size || modal.size,
-            modalOptions: item.modalOptions || modal.modalOptions,
+            paramsName: item.paramName || modal!.paramsName,
+            size: item.size || modal!.size,
+            modalOptions: item.modalOptions || modal!.modalOptions,
           };
         }
         if (item.modal == null || item.modal.component == null) {
@@ -78,8 +78,7 @@ export class STColumnSource {
         };
       }
 
-      item.children =
-        item.children && item.children.length > 0 ? this.btnCoerce(item.children) : [];
+      item.children = item.children && item.children.length > 0 ? this.btnCoerce(item.children) : [];
 
       // i18n
       if (item.i18n && this.i18nSrv) {
@@ -95,14 +94,14 @@ export class STColumnSource {
   private btnCoerceIf(list: STColumnButton[]) {
     for (const item of list) {
       if (!item.iif) item.iif = () => true;
-      if (item.children.length > 0) {
+      if (item.children && item.children.length > 0) {
         this.btnCoerceIf(item.children);
       }
     }
   }
 
   private fixedCoerce(list: STColumn[]) {
-    const countReduce = (a: number, b: STColumn) => a + +b.width.toString().replace('px', '');
+    const countReduce = (a: number, b: STColumn) => a + +b.width!.toString().replace('px', '');
     // left width
     list
       .filter(w => w.fixed && w.fixed === 'left' && w.width)
@@ -111,10 +110,7 @@ export class STColumnSource {
     list
       .filter(w => w.fixed && w.fixed === 'right' && w.width)
       .reverse()
-      .forEach(
-        (item, idx) =>
-          (item._right = (idx > 0 ? list.slice(-idx).reduce(countReduce, 0) : 0) + 'px'),
-      );
+      .forEach((item, idx) => (item._right = (idx > 0 ? list.slice(-idx).reduce(countReduce, 0) : 0) + 'px'));
   }
 
   private sortCoerce(item: STColumn): STSortMap {
@@ -150,8 +146,8 @@ export class STColumnSource {
     return res;
   }
 
-  private filterCoerce(item: STColumn): STColumnFilter {
-    let res: STColumnFilter = null;
+  private filterCoerce(item: STColumn): STColumnFilter | null {
+    let res: STColumnFilter | null = null;
     // compatible
     if (item.filters && item.filters.length > 0) {
       res = {
@@ -166,7 +162,7 @@ export class STColumnSource {
         reName: item.filterReName,
       };
     } else {
-      res = item.filter;
+      res = item.filter as STColumnFilter;
     }
 
     if (res == null || res.menus.length === 0) {
@@ -189,7 +185,7 @@ export class STColumnSource {
       res.key = item.indexKey;
     }
 
-    res.default = res.menus.findIndex(w => w.checked) !== -1;
+    res.default = res.menus.findIndex(w => w.checked!) !== -1;
 
     if (this.acl) {
       res.menus = res.menus.filter(w => this.acl.can(w.acl));
@@ -284,7 +280,7 @@ export class STColumnSource {
           number: 'text-right',
           currency: 'text-right',
           date: 'text-center',
-        }[item.type];
+        }[item.type!];
       }
       // width
       if (typeof item.width === 'number') {
@@ -294,9 +290,9 @@ export class STColumnSource {
       // sorter
       item._sort = this.sortCoerce(item);
       // filter
-      item.filter = this.filterCoerce(item);
+      item.filter = this.filterCoerce(item) as STColumnFilter;
       // buttons
-      item.buttons = this.btnCoerce(item.buttons);
+      item.buttons = this.btnCoerce(item.buttons!);
       // restore custom row
       this.restoreRender(item);
 

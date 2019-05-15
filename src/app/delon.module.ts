@@ -1,9 +1,4 @@
-import {
-  ModuleWithProviders,
-  NgModule,
-  Optional,
-  SkipSelf,
-} from '@angular/core';
+import { ModuleWithProviders, NgModule, Optional, SkipSelf } from '@angular/core';
 import { throwIfAlreadyLoaded } from './core/module-import-guard';
 
 import { DelonFormModule } from '@delon/form';
@@ -24,8 +19,8 @@ import * as MOCKDATA from '../../_mock';
  *  </section>
  *  ```
  */
-import { RouteReuseStrategy } from '@angular/router';
-import { ReuseTabService, ReuseTabStrategy } from '@delon/abc/reuse-tab';
+// import { RouteReuseStrategy } from '@angular/router';
+// import { ReuseTabService, ReuseTabStrategy } from '@delon/abc/reuse-tab';
 const REUSETAB_PROVIDES = [
   // {
   //   provide: RouteReuseStrategy,
@@ -55,11 +50,7 @@ export function fnLodopConfig(): LodopConfig {
 // #endregion
 
 @NgModule({
-  imports: [
-    AlainThemeModule.forRoot(),
-    DelonFormModule.forRoot(),
-    DelonMockModule.forRoot({ data: MOCKDATA }),
-  ],
+  imports: [AlainThemeModule.forRoot(), DelonFormModule.forRoot(), DelonMockModule.forRoot({ data: MOCKDATA })],
 })
 export class DelonModule {
   constructor(

@@ -35,6 +35,13 @@ export class AppModule { }
 
 ## API
 
+### DelonACLConfig
+
+| Name   | Type  | Summary | Default |
+| --- | --- | --- | --- |
+| `[guard_url]` | `string` | Router URL when guard fail | `/403` |
+| `[preCan]` | `(roleOrAbility: ACLCanType) => ACLType` | `can` before execution callback | - |
+
 ### ACLService
 
 | Name | Description |
@@ -66,3 +73,4 @@ type ACLCanType = number | number[] | string | string[] | ACLType
 | `[role]` | `string[]` | List of role | - |
 | `[ability]` | `number[], string[]` | List of permission | - |
 | `[mode]` | `allOf, oneOf` | `allOf` Must be valid against all of the given permission.<br>`oneOf` Must be valid against exactly one of the given permission. | `oneOf` |
+| `[except]` | `boolean` | Whether it's except, when the result is `true`, it means unauthorized | `false` |

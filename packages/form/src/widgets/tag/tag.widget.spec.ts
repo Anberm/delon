@@ -1,18 +1,16 @@
 import { DebugElement } from '@angular/core';
 import { fakeAsync, ComponentFixture } from '@angular/core/testing';
 import { createTestContext } from '@delon/testing';
-import { NzSliderComponent, NzTagComponent } from 'ng-zorro-antd';
+import { NzTagComponent } from 'ng-zorro-antd';
 
 import { configureSFTestSuite, SFPage, TestFormComponent } from '../../../spec/base.spec';
 import { SFSchema } from '../../../src/schema/index';
-import { TagWidget } from './tag.widget';
 
 describe('form: widget: tag', () => {
   let fixture: ComponentFixture<TestFormComponent>;
   let dl: DebugElement;
   let context: TestFormComponent;
   let page: SFPage;
-  const widget = 'tag';
 
   configureSFTestSuite();
 
@@ -32,11 +30,7 @@ describe('form: widget: tag', () => {
         a: {
           type: 'number',
           title: '兴趣',
-          enum: [
-            { value: 1, label: '电影' },
-            { value: 2, label: '书' },
-            { value: 3, label: '旅行' },
-          ],
+          enum: [{ value: 1, label: '电影' }, { value: 2, label: '书' }, { value: 3, label: '旅行' }],
           ui: {
             widget: 'tag',
             checkedChange: jasmine.createSpy(),
@@ -49,7 +43,7 @@ describe('form: widget: tag', () => {
     const res = page.getValue('a') as number[];
     expect(res.length).toBe(1);
     expect(res[0]).toBe(2);
-    expect((s.properties.a.ui as any).checkedChange).toHaveBeenCalled();
+    expect((s.properties!.a.ui as any).checkedChange).toHaveBeenCalled();
   }));
 
   describe('#mode', () => {
@@ -60,11 +54,7 @@ describe('form: widget: tag', () => {
             a: {
               type: 'number',
               title: '兴趣',
-              enum: [
-                { value: 1, label: '电影' },
-                { value: 2, label: '书' },
-                { value: 3, label: '旅行' },
-              ],
+              enum: [{ value: 1, label: '电影' }, { value: 2, label: '书' }, { value: 3, label: '旅行' }],
               ui: {
                 widget: 'tag',
                 mode: 'default',
@@ -85,11 +75,7 @@ describe('form: widget: tag', () => {
               a: {
                 type: 'number',
                 title: '兴趣',
-                enum: [
-                  { value: 1, label: '电影' },
-                  { value: 2, label: '书' },
-                  { value: 3, label: '旅行' },
-                ],
+                enum: [{ value: 1, label: '电影' }, { value: 2, label: '书' }, { value: 3, label: '旅行' }],
                 ui: {
                   widget: 'tag',
                   mode: 'closeable',
@@ -107,11 +93,7 @@ describe('form: widget: tag', () => {
             a: {
               type: 'number',
               title: '兴趣',
-              enum: [
-                { value: 1, label: '电影' },
-                { value: 2, label: '书' },
-                { value: 3, label: '旅行' },
-              ],
+              enum: [{ value: 1, label: '电影' }, { value: 2, label: '书' }, { value: 3, label: '旅行' }],
               ui: {
                 widget: 'tag',
                 mode: 'closeable',
@@ -124,7 +106,7 @@ describe('form: widget: tag', () => {
         };
         page.newSchema(s).typeEvent('click', '.anticon');
 
-        const ui = s.properties.a.ui as any;
+        const ui = s.properties!.a.ui as any;
         expect(ui.afterClose).toHaveBeenCalled();
         expect(ui.onClose).toHaveBeenCalled();
       }));

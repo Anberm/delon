@@ -15,6 +15,7 @@ import {
   Renderer2,
   SimpleChange,
   SimpleChanges,
+  TemplateRef,
 } from '@angular/core';
 import { ActivatedRoute, NavigationEnd, Router } from '@angular/router';
 import { AlainI18NService, ALAIN_I18N_TOKEN } from '@delon/theme';
@@ -37,6 +38,7 @@ import { ReuseTabService } from './reuse-tab.service';
 
 @Component({
   selector: 'reuse-tab',
+  exportAs: 'reuseTab',
   templateUrl: './reuse-tab.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
   providers: [ReuseTabContextService],
@@ -64,12 +66,14 @@ export class ReuseTabComponent implements OnInit, OnChanges, OnDestroy {
   @Input() @InputBoolean() keepingScroll = false;
   @Input()
   set keepingScrollContainer(value: string | Element) {
-    this._keepingScrollContainer =
-      typeof value === 'string' ? this.doc.querySelector(value) : value;
+    this._keepingScrollContainer = typeof value === 'string' ? this.doc.querySelector(value) : value;
   }
   @Input() customContextMenu: ReuseCustomContextMenu[] = [];
+  @Input() tabBarExtraContent: TemplateRef<void>;
+  @Input() tabBarGutter: number;
+  @Input() tabBarStyle: { [key: string]: string };
   @Output() readonly change = new EventEmitter<ReuseItem>();
-  @Output() readonly close = new EventEmitter<ReuseItem>();
+  @Output() readonly close = new EventEmitter<ReuseItem | null>();
 
   // #endregion
 
@@ -92,7 +96,7 @@ export class ReuseTabComponent implements OnInit, OnChanges, OnDestroy {
 
   private genList(notify?: ReuseTabNotify) {
     const isClosed = notify && notify.active === 'close';
-    const beforeClosePos = isClosed ? this.list.findIndex(w => w.url === notify.url) : -1;
+    const beforeClosePos = isClosed ? this.list.findIndex(w => w.url === notify!.url) : -1;
     const ls = this.srv.items.map((item: ReuseTabCached, index: number) => {
       return {
         url: item.url,
@@ -109,15 +113,14 @@ export class ReuseTabComponent implements OnInit, OnChanges, OnDestroy {
       const idx = ls.findIndex(w => w.url === url);
       // jump directly when the current exists in the list
       // or create a new current item and jump
-      if (idx !== -1 || (isClosed && notify.url === url)) {
+      if (idx !== -1 || (isClosed && notify!.url === url)) {
         this.pos = isClosed ? (idx >= beforeClosePos ? this.pos - 1 : this.pos) : idx;
       } else {
         const snapshotTrue = this.srv.getTruthRoute(snapshot);
         ls.push({
           url,
           title: this.genTit(this.srv.getTitle(url, snapshotTrue)),
-          closable:
-            this.allowClose && this.srv.count > 0 && this.srv.getClosable(url, snapshotTrue),
+          closable: this.allowClose && this.srv.count > 0 && this.srv.getClosable(url, snapshotTrue),
           index: ls.length,
           active: false,
           last: false,
@@ -147,11 +150,11 @@ export class ReuseTabComponent implements OnInit, OnChanges, OnDestroy {
   // #region UI
 
   private get acitveIndex() {
-    return this.list.find(w => w.active).index;
+    return this.list.find(w => w.active)!.index;
   }
 
   cmChange(res: ReuseContextCloseEvent) {
-    let fn: () => void;
+    let fn: (() => void) | null = null;
     switch (res.type) {
       case 'close':
         this._close(null, res.item.index, res.includeNonCloseable);
@@ -171,7 +174,7 @@ export class ReuseTabComponent implements OnInit, OnChanges, OnDestroy {
         break;
     }
     if (!fn) {
-      return ;
+      return;
     }
     if (!res.item.active && res.item.index <= this.acitveIndex) {
       this.to(null, res.item.index, fn);
@@ -188,8 +191,8 @@ export class ReuseTabComponent implements OnInit, OnChanges, OnDestroy {
     if (dc) this.cdr.detectChanges();
   }
 
-  to(e: Event, index: number, cb?: () => void) {
-    if (e) {
+  to(e: Event | null, index: number, cb?: () => void) {
+    if (e != null) {
       e.preventDefault();
       e.stopPropagation();
     }
@@ -207,8 +210,8 @@ export class ReuseTabComponent implements OnInit, OnChanges, OnDestroy {
     });
   }
 
-  _close(e: Event, idx: number, includeNonCloseable: boolean) {
-    if (e) {
+  _close(e: Event | null, idx: number, includeNonCloseable: boolean) {
+    if (e != null) {
       e.preventDefault();
       e.stopPropagation();
     }
@@ -229,7 +232,7 @@ export class ReuseTabComponent implements OnInit, OnChanges, OnDestroy {
       )
       .subscribe(() => this.genList());
 
-    this.srv.change.pipe(takeUntil(this.unsubscribe$)).subscribe(res => this.genList(res));
+    this.srv.change.pipe(takeUntil(this.unsubscribe$)).subscribe(res => this.genList(res!));
 
     this.i18nSrv.change
       .pipe(

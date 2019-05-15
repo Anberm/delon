@@ -9,10 +9,7 @@ export class StringTemplateOutletDirective {
   private inputViewRef: EmbeddedViewRef<void> | null = null;
   private defaultViewRef: EmbeddedViewRef<void> | null = null;
 
-  constructor(
-    private viewContainer: ViewContainerRef,
-    private defaultTemplate: TemplateRef<void>,
-  ) {}
+  constructor(private viewContainer: ViewContainerRef, private defaultTemplate: TemplateRef<void>) {}
 
   @Input()
   set stringTemplateOutlet(value: string | TemplateRef<void>) {
@@ -41,7 +38,7 @@ export class StringTemplateOutletDirective {
       /** use input template when input is templateRef **/
       this.viewContainer.clear();
       this.defaultViewRef = null;
-      this.inputViewRef = this.viewContainer.createEmbeddedView(this.inputTemplate);
+      this.inputViewRef = this.viewContainer.createEmbeddedView(this.inputTemplate!);
     }
   }
 }

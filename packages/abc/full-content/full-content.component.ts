@@ -26,6 +26,7 @@ const hideTitleCls = `full-content__hidden-title`;
 
 @Component({
   selector: 'full-content',
+  exportAs: 'fullContent',
   template: `
     <ng-content></ng-content>
   `,
@@ -43,7 +44,7 @@ export class FullContentComponent implements AfterViewInit, OnInit, OnChanges, O
   private id = `_full-content-${Math.random()
     .toString(36)
     .substring(2)}`;
-  private scroll$: Subscription = null;
+  private scroll$: Subscription | null = null;
 
   _height = 0;
 
@@ -145,7 +146,7 @@ export class FullContentComponent implements AfterViewInit, OnInit, OnChanges, O
 
   ngOnDestroy(): void {
     this.removeInBody();
-    this.scroll$.unsubscribe();
+    this.scroll$!.unsubscribe();
     this.srv$.unsubscribe();
     this.route$.unsubscribe();
   }

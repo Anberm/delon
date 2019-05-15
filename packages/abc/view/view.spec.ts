@@ -88,9 +88,7 @@ describe('abc: view', () => {
           context.label = 'aa';
           fixture.detectChanges();
           page.expect(prefixCls + 'item-fixed');
-          expect(page.getEl(prefixCls + 'label').style.width).toBe(
-            `${context.parent_labelWidth}px`,
-          );
+          expect(page.getEl(prefixCls + 'label').style.width).toBe(`${context.parent_labelWidth}px`);
         });
       });
       describe('#item', () => {
@@ -245,7 +243,7 @@ class TestComponent {
   viewComp: SVComponent;
   parent_size: 'small' | 'large' = 'large';
   parent_layout: 'horizontal' | 'vertical' = 'horizontal';
-  parent_labelWidth: number = null;
+  parent_labelWidth: number | null = null;
   parent_gutter: number = 32;
   parent_col: number = 3;
   parent_default: boolean = true;
@@ -253,7 +251,7 @@ class TestComponent {
 
   label: string;
   content = '1';
-  col: number;
+  col: number | null;
   default: boolean;
   unit: string;
   type: 'primary' | 'success' | 'danger' | 'warning';

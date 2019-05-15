@@ -16,6 +16,7 @@ const CLSBODY = 'footer-toolbar__body';
 
 @Component({
   selector: 'footer-toolbar',
+  exportAs: 'footerToolbar',
   templateUrl: './footer-toolbar.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -23,11 +24,7 @@ export class FooterToolbarComponent implements OnInit, OnDestroy {
   @Input() @InputBoolean() errorCollect = false;
   @Input() extra: string | TemplateRef<void>;
 
-  constructor(
-    private el: ElementRef,
-    private renderer: Renderer2,
-    @Inject(DOCUMENT) private doc: any,
-  ) {}
+  constructor(private el: ElementRef, private renderer: Renderer2, @Inject(DOCUMENT) private doc: any) {}
 
   private get bodyCls() {
     return this.doc.querySelector('body').classList;

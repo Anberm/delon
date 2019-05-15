@@ -1,7 +1,6 @@
 import { DebugElement } from '@angular/core';
 import { fakeAsync, ComponentFixture } from '@angular/core/testing';
 import { createTestContext } from '@delon/testing';
-import { NzSelectComponent } from 'ng-zorro-antd';
 
 import { configureSFTestSuite, SFPage, TestFormComponent } from '../../../spec/base.spec';
 import { SFSchema } from '../../../src/schema/index';
@@ -24,10 +23,6 @@ describe('form: widget: select', () => {
 
   function getWidget() {
     return page.getWidget<SelectWidget>('sf-' + widget);
-  }
-
-  function getSelect() {
-    return page.getWidget<NzSelectComponent>('nz-select');
   }
 
   it('should be disabled when readOnly is true', fakeAsync(() => {
@@ -88,7 +83,7 @@ describe('form: widget: select', () => {
         .dc()
         .checkValue('/a', 'TRADE_SUCCESS')
         .asyncEnd();
-      const item = s.properties.a.ui as any;
+      const item = s.properties!.a.ui as any;
       expect(item.change).toHaveBeenCalled();
       expect(item.openChange).toHaveBeenCalled();
       getWidget().scrollToBottom();

@@ -51,8 +51,9 @@ config: STConfig
 `[noResult]` | 无数据时显示内容 | `string,TemplateRef<void>` | -
 `[bordered]` | 是否显示边框 | `boolean` | `false`
 `[size]` | table大小 | `'small','middle','default'` | `'default'`
+`[widthMode]` | 设置表格宽度模式 | `STWidthMode` | -
 `[rowClassName]` | 表格行的类名 | `(record: STData, index: number) => string` | -
-`[loading]` | 页面是否加载中 | `boolean` | `false`
+`[loading]` | 页面是否加载中，当指定 `null` 由 st 受控 | `boolean | null` | `null`
 `[loadingDelay]` | 延迟显示加载效果的时间（防止闪烁） | `number` | `0`
 `[scroll]` | 横向或纵向支持滚动，也可用于指定滚动区域的宽高度：`{ x: "300px", y: "300px" }` | `{ y?: string; x?: string }` | -
 `[singleSort]` | 单排序规则<br>若不指定，则返回：`columnName=ascend|descend`<br>若指定，则返回：`sort=columnName.(ascend|descend)` | `STSingleSort` | `null`
@@ -65,6 +66,8 @@ config: STConfig
 `[widthConfig]` | 表头分组时指定每列宽度，与 STColumn 的 width 不可混用 | `string[]` | -
 `[expandRowByClick]` | 通过点击行来展开子行 | `boolean` | `false`
 `[expand]` | 当前列是否包含展开按钮，当数据源中包括 `expand` 表示展开状态 | `TemplateRef<void>` | -
+`[responsive]` | 是否开启响应式 | `boolean` | `true`
+`[responsiveHideHeaderFooter]` | 是否在小屏幕下才显示顶部与底部 | `boolean` | `false`
 `(change)` | 变化时回调，包括：`pi`、`ps`、`checkbox`、`radio`、`sort`、`filter`、`click`、`dblClick`、`expand` 变动 | `EventEmitter<STChange>` | -
 `(error)` | 异常时回调 | `EventEmitter<STError>` | -
 
@@ -122,7 +125,7 @@ class TestComponent {
 参数 | 说明 | 类型 | 默认值
 ----|------|-----|------
 `[reName]` | 重命名返回参数 `total`、`list`，支持 `a.b.c` 的嵌套写法 | `{total:string;list:string}` | -
-`[process]` | 数据预处理 | `(data: STData[]) => STData[]` | -
+`[process]` | 数据预处理 | `(data: STData[], rawData?: any) => STData[]` | -
 
 ### STPage
 
@@ -131,7 +134,7 @@ class TestComponent {
 `[front]` | 前端分页，当 `data` 为 `any[]` 或 `Observable<any[]>` 有效 | `boolean` | `true`
 `[zeroIndexed]` | 后端分页是否采用`0`基索引，只在`data`类型为`string`时有效 | `boolean` | `false`
 `[placement]` | 分页方向 | `'left','center','right'` | `'right'`
-`[show]` | 是否显示分页器 | `boolean` | -
+`[show]` | 是否显示分页器 | `boolean` | `true`
 `[showSize]` | 是否显示分页器中改变页数 | `boolean` | `false`
 `[pageSizes]` | 分页器中每页显示条目数下拉框值 | `number[]` | `[10, 20, 30, 40, 50]`
 `[showQuickJumper]` | 是否显示分页器中快速跳转 | `boolean` | `false`
@@ -201,6 +204,7 @@ class TestComponent {
 `[checked]` | 选择框或单选框状态值 | `boolean` | -
 `[disabled]` | 选择框或单选框 `disabled` 值 | `boolean` | -
 `[expand]` | 是否展开状态 | `boolean` | -
+`[showExpand]` | 是否显示展开按钮 | `boolean` | -
 
 ### STColumn
 
@@ -239,7 +243,7 @@ class TestComponent {
 参数 | 说明 | 类型 | 默认值
 ----|------|-----|------
 `[default]` | 排序的受控属性 | `ascend,descend` | -
-`[compare]` | 本地数据的排序函数，使用一个函数(参考 [Array.sort](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/sort) 的 compareFunction) | `(a: any, b: any) => number` | -
+`[compare]` | 本地数据的排序函数，使用一个函数(参考 [Array.sort](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/sort) 的 compareFunction)，`null` 忽略本地排序，但保持排序功能 | `(a: any, b: any) => number, null` | -
 `[key]` | 远程数据的排序时后端相对应的KEY，默认使用 `index` 属性<br>若 `multiSort: false` 时：`key: 'name' => ?name=1&pi=1`<br>若 `multiSort: true` 允许多个排序 key 存在，或使用 `STMultiSort` 指定多列排序key合并规则 | `string` | -
 `[reName]` | 远程数据的排序时后端相对应的VALUE<br>`{ ascend: '0', descend: '1' }` 结果 `?name=1&pi=1`<br>`{ ascend: 'asc', descend: 'desc' }` 结果 `?name=desc&pi=1` | `{ ascend?: string, descend?: string }` | -
 
@@ -332,6 +336,7 @@ class TestComponent {
 `[truth]` | 真值条件 | `any` | `true`
 `[yes]` | 徽章 `true` 时文本 | `string` | `是`
 `[no]` | 徽章 `false` 时文本 | `string` | `否`
+`[mode]` | 显示模式 | `full,icon,text` | `icon`
 
 ### STColumnBadge
 
@@ -346,6 +351,13 @@ class TestComponent {
 ----|------|-----|------
 `[text]` | 文本 | `string` | -
 `[color]` | Tag颜色值 | `string` | -
+
+### STWidthMode
+
+参数 | 说明 | 类型 | 默认值
+----|------|-----|------
+`[type]` | 类型 | `strict,default` | `default`
+`[strictBehavior]` | `strict` 的行为类型 | `wrap,truncate` | `truncate`
 
 ### STStatistical
 

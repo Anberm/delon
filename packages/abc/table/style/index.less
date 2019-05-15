@@ -5,25 +5,37 @@
 @{st-prefix} {
   display: block;
   &__selection {
-    cursor: pointer;
     padding-left: 2px;
+    cursor: pointer;
   }
   &__p-left {
     .@{ant-prefix}-table-pagination {
-      float: none;
       display: block;
+      float: none;
       text-align: left;
     }
   }
   &__p-center {
     .@{ant-prefix}-table-pagination {
-      float: none;
       display: block;
+      float: none;
       text-align: center;
     }
   }
   // 清除页码底部间距，在大部分列表中会包裹 `nz-card` 导致底部间距过大，若有需求可自行使用 `mb-md` 来调整
   .@{ant-prefix}-table-pagination.@{ant-prefix}-pagination {
     margin-bottom: 0;
+  }
+  @media screen and (min-width: @nz-table-rep-min-width) {
+    &__width {
+      &-strict {
+        .ant-table-body {
+          > table {
+            word-wrap: break-word;
+            table-layout: fixed;
+          }
+        }
+      }
+    }
   }
 }

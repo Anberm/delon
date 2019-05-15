@@ -1,10 +1,4 @@
-import {
-  chain,
-  Rule,
-  SchematicsException,
-  SchematicContext,
-  Tree,
-} from '@angular-devkit/schematics';
+import { chain, Rule, SchematicsException, SchematicContext, Tree } from '@angular-devkit/schematics';
 import { NodePackageInstallTask } from '@angular-devkit/schematics/tasks';
 
 import { getProject } from '../utils/project';
@@ -22,7 +16,7 @@ import { pluginNetworkEnv } from './plugin.network-env';
 import { pluginSTS } from './plugin.sts';
 
 function installPackages() {
-  return (host: Tree, context: SchematicContext) => {
+  return (_host: Tree, context: SchematicContext) => {
     context.addTask(new NodePackageInstallTask());
   };
 }
@@ -71,7 +65,7 @@ export default function(options: PluginSchema): Rule {
         rules.push(...pluginSTS(pluginOptions));
         break;
       case 'asdf':
-        rules.push(pluginAsdf(pluginOptions));
+        rules.push(pluginAsdf());
         break;
       default:
         throw new SchematicsException(`Could not find plugin name: ${options.name}`);

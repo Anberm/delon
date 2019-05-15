@@ -51,8 +51,9 @@ Property | Description | Type | Default
 `[noResult]` | Custom no result content | `string,TemplateRef<void>` | -
 `[bordered]` | Whether to show all table borders | `boolean` | `false`
 `[size]` | Size of table | `'small','middle','default'` | `'default'`
+`[widthMode]` | Set the table width mode | `STWidthMode` | -
 `[rowClassName]` | Row class name of table | `(record: STData, index: number) => string` | -
-`[loading]` | Loading status of table | `boolean` | `false`
+`[loading]` | Loading status of table, when specifying `null` is controlled by st | `boolean | null` | `null`
 `[loadingDelay]` | Specifies a delay in milliseconds for loading state (prevent flush) | `number` | `0`
 `[scroll]` | Whether table can be scrolled in x/y direction, x or y can be a string that indicates the width and height of table body | `{ y?: string; x?: string }` | -
 `[singleSort]` | Single sort config<br>If not specified, return: `columnName=ascend|descend`<br>If specified, return: `sort=columnName.(ascend|descend)` | `STSingleSort` | `null`
@@ -65,6 +66,8 @@ Property | Description | Type | Default
 `[widthConfig]` | Set col width can not used with width of STColumn | `string[]` | -
 `[expandRowByClick]` | Whether to expand row by clicking anywhere in the whole row | `boolean` | `false`
 `[expand]` | Whether current column include expand icon | `TemplateRef<void>` | -
+`[responsive]` | Whether to turn on responsive | `boolean` | `true`
+`[responsiveHideHeaderFooter]` | Whether to display the header and footer under the small screen | `boolean` | `false`
 `(change)` | Events | `EventEmitter<STChange>` | -
 `(error)` | Error event | `EventEmitter<STError>` | -
 
@@ -122,7 +125,7 @@ Property | Description | Type | Default
 Property | Description | Type | Default
 -------- | ----------- | ---- | -------
 `[reName]` | Map name `total`、`list`, could be set like `a.b.c` | `{total:string;list:string}` | -
-`[process]` | Data preprocessing | `(data: STData[]) => STData[]` | -
+`[process]` | Data preprocessing | `(data: STData[], rawData?: any) => STData[]` | -
 
 ### STPage
 
@@ -131,7 +134,7 @@ Property | Description | Type | Default
 `[front]` | Front paging when `data` is `any[]` or `Observable<any[]>` | `boolean` | `true`
 `[zeroIndexed]` | Whether the backend paging uses the `0` base index (only data is url) | `boolean` | `false`
 `[placement]` | Pager direction | `'left','center','right'` | `'right'`
-`[show]` | Whether to show pager | `boolean` | -
+`[show]` | Whether to show pager | `boolean` | `true`
 `[showSize]` | Determine whether `ps` can be changed | `boolean` | `false`
 `[pageSizes]` | Specify the sizeChanger options | `number[]` | `[10, 20, 30, 40, 50]`
 `[showQuickJumper]` | Determine whether you can jump to pages directly | `boolean` | `false`
@@ -208,6 +211,7 @@ Property | Description | Type | Default
 `[checked]` | Select or radio button `checked` status value | `boolean` | -
 `[disabled]` | Select or radio button `disabled` status value | `boolean` | -
 `[expand]` | Whether to expand the status value | `boolean` | -
+`[showExpand]` | Whether show expand icon | `boolean` | -
 
 ### STColumn
 
@@ -246,7 +250,7 @@ Property | Description | Type | Default
 Property | Description | Type | Default
 -------- | ----------- | ---- | -------
 `[default]` | Default order of sorted values | `ascend,descend` | -
-`[compare]` | Sort function for local sort, see [Array.sort](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/sort)'s compareFunction. | `(a: STData, b: STData) => number` | -
+`[compare]` | Sort function for local sort, see [Array.sort](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/sort)'s compareFunction, `null` ingore local sort but keeping sort function. | `(a: STData, b: STData) => number, null` | -
 `[key]` | Unique key of this column, default is `index` property value<br>`multiSort: false` => `key: 'name' => ?name=1&pi=1`<br>`multiSort: true` allow multiple sort keys, or use `STMultiSort` to specify multi-column sort key merge rule | `string` | -
 `[reName]` | Map name<br>`{ ascend: '0', descend: '1' }` => `?name=1&pi=1`<br>`{ ascend: 'asc', descend: 'desc' }` => `?name=desc&pi=1` | `{ ascend?: string, descend?: string }` | -
 
@@ -339,6 +343,7 @@ Property | Description | Type | Default
 `[truth]` | Truth condition value | `any` | `true`
 `[yes]` | Badge `true` text | `string` | `是`
 `[no]` | Badge `false` text | `string` | `否`
+`[mode]` | Display mode for yn | `full,icon,text` | `icon`
 
 ### STColumnBadge
 
@@ -353,6 +358,13 @@ Property | Description | Type | Default
 -------- | ----------- | ---- | -------
 `[text]` | Tag text | `string` | -
 `[color]` | Tag color value | `string` | -
+
+### STWidthMode
+
+Property | Description | Type | Default
+-------- | ----------- | ---- | -------
+`[type]` | Type of width mode | `strict,default` | `default`
+`[strictBehavior]` | Behavior type of `strict` | `wrap,truncate` | `truncate`
 
 ### STStatistical
 

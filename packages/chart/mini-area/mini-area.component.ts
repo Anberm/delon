@@ -20,6 +20,7 @@ export interface G2MiniAreaData {
 
 @Component({
   selector: 'g2-mini-area',
+  exportAs: 'g2MiniArea',
   template: ``,
   host: {
     '[style.height.px]': 'height',
@@ -106,18 +107,7 @@ export class G2MiniAreaComponent implements OnInit, OnChanges, OnDestroy {
   }
 
   private attachChart() {
-    const {
-      chart,
-      line,
-      fit,
-      height,
-      animate,
-      padding,
-      data,
-      color,
-      borderColor,
-      borderWidth,
-    } = this;
+    const { chart, line, fit, height, animate, padding, data, color, borderColor, borderWidth } = this;
     if (!chart || !data || data.length <= 0) {
       return;
     }

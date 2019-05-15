@@ -35,17 +35,12 @@ function configToAngularJson(host: Tree, options: PluginOptions) {
 
 function envConfig(host: Tree, options: PluginOptions) {
   const defEnvPath = `${options.sourceRoot}/environments/environment.ts`;
-  const defContent = host.get(defEnvPath).content;
+  const defContent = host.get(defEnvPath)!.content;
   if (!host.exists(defEnvPath)) return;
   // 1. update default env file
   addValueToVariable(host, defEnvPath, 'environment', 'hmr: false');
   // 2. update prod env file
-  addValueToVariable(
-    host,
-    `${options.sourceRoot}/environments/environment.prod.ts`,
-    'environment',
-    'hmr: false',
-  );
+  addValueToVariable(host, `${options.sourceRoot}/environments/environment.prod.ts`, 'environment', 'hmr: false');
   // 3. copy default env file to hmr file
   const hmrEnvPath = `${options.sourceRoot}/environments/environment.hmr.ts`;
   host.create(hmrEnvPath, defContent);
@@ -67,7 +62,7 @@ function addNodeTypeToTsconfig(host: Tree, options: PluginOptions) {
 }
 
 export function pluginHmr(options: PluginOptions): Rule {
-  return (host: Tree, context: SchematicContext) => {
+  return (host: Tree) => {
     // 1. add package
     (options.type === 'add' ? addPackageToPackageJson : removePackageFromPackageJson)(
       host,

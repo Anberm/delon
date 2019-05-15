@@ -1,7 +1,23 @@
 import { HttpHeaders, HttpParams } from '@angular/common/http';
-import { DrawerHelperOptions, ModalHelperOptions } from '@delon/theme';
-import { ModalOptionsForService, NzDrawerOptions } from 'ng-zorro-antd';
+import { DrawerHelperOptions, ModalHelperOptions, YNMode } from '@delon/theme';
+import { NzDrawerOptions } from 'ng-zorro-antd/drawer';
+import { ModalOptionsForService } from 'ng-zorro-antd/modal';
 import { STComponent } from './table.component';
+
+export interface STWidthMode {
+  /**
+   * 宽度类型
+   * - `default` 默认行为
+   * - `strict` 严格模式，即强制按 `width` 指定的宽度呈现，并根据 `strictBehavior` 类型处理
+   */
+  type?: 'strict' | 'default';
+  /**
+   * 严格模式的处理行为
+   * - `wrap` 强制换行
+   * - `truncate` 截短
+   */
+  strictBehavior?: 'wrap' | 'truncate';
+}
 
 export interface STReq {
   /**
@@ -68,7 +84,7 @@ export interface STRes {
   /**
    * 数据预处理
    */
-  process?: (data: STData[]) => STData[];
+  process?: (data: STData[], rawData?: any) => STData[];
 }
 
 export interface STPage {
@@ -142,6 +158,10 @@ export interface STData {
    * 是否展开状态
    */
   expand?: boolean;
+  /**
+   * 是否显示展开按钮
+   */
+  showExpand?: boolean;
 
   [key: string]: any;
 }
@@ -168,7 +188,7 @@ export interface STColumn {
    * - `price.market`
    * - `[ 'price', 'market' ]`
    */
-  index?: string | string[];
+  index?: string | string[] | null;
   /**
    * 类型
    * - `no` 行号，计算规则：`index + noIndex`
@@ -183,18 +203,7 @@ export interface STColumn {
    * - `date` 日期格式且居中(若 `className` 存在则优先)，使用 `dateFormat` 自定义格式
    * - `yn` 将`boolean`类型徽章化 [document](https://ng-alain.com/docs/data-render#yn)
    */
-  type?:
-    | 'checkbox'
-    | 'link'
-    | 'badge'
-    | 'tag'
-    | 'radio'
-    | 'img'
-    | 'currency'
-    | 'number'
-    | 'date'
-    | 'yn'
-    | 'no';
+  type?: 'checkbox' | 'link' | 'badge' | 'tag' | 'radio' | 'img' | 'currency' | 'number' | 'date' | 'yn' | 'no';
   /**
    * 链接回调，若返回一个字符串表示导航URL会自动触发 `router.navigateByUrl`
    */
@@ -285,11 +294,11 @@ export interface STColumn {
   /**
    * 徽标配置项
    */
-  badge?: STColumnBadge;
+  badge?: STColumnBadge | null;
   /**
    * 标签配置项
    */
-  tag?: STColumnTag;
+  tag?: STColumnTag | null;
   /**
    * 行号索引，默认：`1`
    * - 计算规则为：`index + noIndex`
@@ -313,12 +322,7 @@ export interface STColumn {
 
 export type STStatisticalType = 'count' | 'distinctCount' | 'sum' | 'average' | 'max' | 'min';
 
-export type STStatisticalFn = (
-  values: number[],
-  col: STColumn,
-  list: STData[],
-  rawData?: any,
-) => STStatisticalResult;
+export type STStatisticalFn = (values: number[], col: STColumn, list: STData[], rawData?: any) => STStatisticalResult;
 
 export interface STStatistical {
   type: STStatisticalType | STStatisticalFn;
@@ -350,14 +354,15 @@ export interface STColumnSort {
   default?: 'ascend' | 'descend';
   /**
    * 本地数据的排序函数，使用一个函数(参考 [Array.sort](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/sort) 的 compareFunction)
+   * - `null` 忽略本地排序，但保持排序功能
    */
-  compare?: (a: STData, b: STData) => number;
+  compare?: ((a: STData, b: STData) => number) | null;
   /**
    * 远程数据的排序时后端相对应的KEY，默认使用 `index` 属性
    * - 若 `multiSort: false` 时：`key: 'name' => ?name=1&pi=1`
    * - 若 `multiSort: true` 允许多个排序 key 存在，或使用 `STMultiSort` 指定多列排序key合并规则
    */
-  key?: string;
+  key?: string | null;
   /**
    * 远程数据的排序时后端相对应的VALUE
    * - `{ ascend: '0', descend: '1' }` 结果 `?name=1&pi=1`
@@ -374,7 +379,7 @@ export interface STColumnFilter {
   /**
    * 本地数据的筛选函数
    */
-  fn?: (filter: STColumnFilterMenu, record: STData) => boolean;
+  fn?: ((filter: STColumnFilterMenu, record: STData) => boolean) | null;
   /**
    * 标识数据是否已过滤，筛选图标会高亮
    */
@@ -399,7 +404,7 @@ export interface STColumnFilter {
    * 远程数据的过滤时后端相对应的KEY，默认使用 `index` 属性
    * `key: 'name'` 结果 `?name=1&pi=1`
    */
-  key?: string;
+  key?: string | null;
   /**
    * 远程数据的过滤时后端相对应的VALUE
    * - 默认当 `multiple: true` 时以英文逗号拼接的字符串
@@ -454,6 +459,13 @@ export interface STColumnYn {
    * 徽章 `false` 时文本，（默认：`否`）
    */
   no?: string;
+  /**
+   * 徽章显示风格
+   * - `full` 图标和文本
+   * - `icon` 图标
+   * - `text` 文本
+   */
+  mode?: YNMode;
 }
 
 export interface STIcon {
@@ -722,16 +734,7 @@ export interface STColumnTagValue {
     | string;
 }
 
-export type STChangeType =
-  | 'pi'
-  | 'ps'
-  | 'checkbox'
-  | 'radio'
-  | 'sort'
-  | 'filter'
-  | 'click'
-  | 'dblClick'
-  | 'expand';
+export type STChangeType = 'pi' | 'ps' | 'checkbox' | 'radio' | 'sort' | 'filter' | 'click' | 'dblClick' | 'expand';
 
 /**
  * 回调数据

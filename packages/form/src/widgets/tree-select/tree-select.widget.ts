@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { NzFormatEmitEvent } from 'ng-zorro-antd';
+import { NzFormatEmitEvent } from 'ng-zorro-antd/core';
 import { SFValue } from '../../interface';
 import { SFSchemaEnum } from '../../schema';
 import { getData, toBool } from '../../utils';
@@ -30,11 +30,11 @@ export class TreeSelectWidget extends ControlWidget implements OnInit {
     };
   }
 
-  reset(value: SFValue) {
-    getData(this.schema, this.ui, this.formProperty.formData)
-      .subscribe(list => {
-        this.data = list;
-      });
+  reset(_value: SFValue) {
+    getData(this.schema, this.ui, this.formProperty.formData).subscribe(list => {
+      this.data = list;
+      this.detectChanges();
+    });
   }
 
   change(value: string[] | string) {
@@ -45,11 +45,10 @@ export class TreeSelectWidget extends ControlWidget implements OnInit {
   expandChange(e: NzFormatEmitEvent) {
     const { ui } = this;
     if (typeof ui.expandChange !== 'function') return;
-    ui.expandChange(e)
-      .subscribe(res => {
-        e.node.clearChildren();
-        e.node.addChildren(res);
-        this.detectChanges();
-      });
+    ui.expandChange(e).subscribe(res => {
+      e.node!.clearChildren();
+      e.node!.addChildren(res);
+      this.detectChanges();
+    });
   }
 }

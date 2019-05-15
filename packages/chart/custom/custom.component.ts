@@ -14,6 +14,7 @@ import { debounceTime } from 'rxjs/operators';
 
 @Component({
   selector: 'g2,g2-custom',
+  exportAs: 'g2Custom',
   template: `
     <ng-content></ng-content>
   `,
@@ -23,7 +24,7 @@ import { debounceTime } from 'rxjs/operators';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class G2CustomComponent implements AfterViewInit, OnDestroy {
-  private resize$: Subscription = null;
+  private resize$: Subscription | null = null;
 
   // #region fields
 

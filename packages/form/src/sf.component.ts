@@ -8,6 +8,8 @@ import {
   OnDestroy,
   OnInit,
   Output,
+  SimpleChange,
+  SimpleChanges,
   TemplateRef,
 } from '@angular/core';
 import { DelonLocaleService, LocaleData } from '@delon/theme';
@@ -26,15 +28,13 @@ import { di, resolveIf, retrieveSchema, FORMATMAPS } from './utils';
 import { SchemaValidatorFactory } from './validator.factory';
 import { WidgetFactory } from './widget.factory';
 
-export function useFactory(
-  schemaValidatorFactory: SchemaValidatorFactory,
-  options: DelonFormConfig,
-) {
+export function useFactory(schemaValidatorFactory: SchemaValidatorFactory, options: DelonFormConfig) {
   return new FormPropertyFactory(schemaValidatorFactory, options);
 }
 
 @Component({
   selector: 'sf, [sf]',
+  exportAs: 'sf',
   templateUrl: './sf.component.html',
   providers: [
     WidgetFactory,
@@ -47,6 +47,7 @@ export function useFactory(
   ],
   host: {
     '[class.sf]': 'true',
+    '[class.sf__inline]': `layout === 'inline'`,
     '[class.sf__search]': `mode === 'search'`,
     '[class.sf__edit]': `mode === 'edit'`,
     '[class.sf__no-error]': `onlyVisual`,
@@ -62,7 +63,7 @@ export class SFComponent implements OnInit, OnChanges, OnDestroy {
   private _inited = false;
 
   locale: LocaleData = {};
-  rootProperty: FormProperty = null;
+  rootProperty: FormProperty | null = null;
   _formData: {};
   _btn: SFButton;
   _schema: SFSchema;
@@ -124,7 +125,10 @@ export class SFComponent implements OnInit, OnChanges, OnDestroy {
     return this._mode;
   }
   private _mode: 'default' | 'search' | 'edit';
-
+  /**
+   * Whether to load status，when `true` reset button is disabled status, submit button is loading status
+   */
+  @Input() @InputBoolean() loading = false;
   /** 数据变更时回调 */
   @Output() readonly formChange = new EventEmitter<{}>();
   /** 提交表单时回调 */
@@ -149,8 +153,8 @@ export class SFComponent implements OnInit, OnChanges, OnDestroy {
    * 根据路径获取表单元素属性
    * @param path [路径](https://ng-alain.com/form/qa#path)
    */
-  getProperty(path: string): FormProperty {
-    return this.rootProperty.searchProperty(path);
+  getProperty(path: string): FormProperty | null {
+    return this.rootProperty!.searchProperty(path);
   }
 
   /**
@@ -190,9 +194,9 @@ export class SFComponent implements OnInit, OnChanges, OnDestroy {
     private cdr: ChangeDetectorRef,
     private i18n: DelonLocaleService,
   ) {
-    this.liveValidate = options.liveValidate;
-    this.firstVisual = options.firstVisual;
-    this.autocomplete = options.autocomplete;
+    this.liveValidate = options.liveValidate as boolean;
+    this.firstVisual = options.firstVisual as boolean;
+    this.autocomplete = options.autocomplete as 'on' | 'off';
     this.i18n$ = this.i18n.change.subscribe(() => {
       this.locale = this.i18n.getData('sf');
       if (this._inited) {
@@ -209,14 +213,14 @@ export class SFComponent implements OnInit, OnChanges, OnDestroy {
 
     const inFn = (
       schema: SFSchema,
-      parentSchema: SFSchema,
+      _parentSchema: SFSchema,
       uiSchema: SFUISchemaItemRun,
       parentUiSchema: SFUISchemaItemRun,
       uiRes: SFUISchemaItemRun,
     ) => {
-      Object.keys(schema.properties).forEach(key => {
+      Object.keys(schema.properties!).forEach(key => {
         const uiKey = `$${key}`;
-        const property = retrieveSchema(schema.properties[key] as SFSchema, definitions);
+        const property = retrieveSchema(schema.properties![key] as SFSchema, definitions);
         const ui = {
           widget: property.type,
           ...(property.format && FORMATMAPS[property.format]),
@@ -236,16 +240,12 @@ export class SFComponent implements OnInit, OnChanges, OnDestroy {
             }
           } else {
             if (!ui.spanLabel)
-              ui.spanLabel =
-                typeof parentUiSchema.spanLabel === 'undefined' ? 5 : parentUiSchema.spanLabel;
+              ui.spanLabel = typeof parentUiSchema.spanLabel === 'undefined' ? 5 : parentUiSchema.spanLabel;
             if (!ui.spanControl)
-              ui.spanControl =
-                typeof parentUiSchema.spanControl === 'undefined' ? 19 : parentUiSchema.spanControl;
+              ui.spanControl = typeof parentUiSchema.spanControl === 'undefined' ? 19 : parentUiSchema.spanControl;
             if (!ui.offsetControl)
               ui.offsetControl =
-                typeof parentUiSchema.offsetControl === 'undefined'
-                  ? null
-                  : parentUiSchema.offsetControl;
+                typeof parentUiSchema.offsetControl === 'undefined' ? null : parentUiSchema.offsetControl;
           }
         } else {
           ui.spanLabel = null;
@@ -253,7 +253,7 @@ export class SFComponent implements OnInit, OnChanges, OnDestroy {
           ui.offsetControl = null;
         }
         if (ui.widget === 'date' && ui.end != null) {
-          const dateEndProperty = schema.properties[ui.end];
+          const dateEndProperty = schema.properties![ui.end];
           if (dateEndProperty) {
             dateEndProperty.ui = {
               ...(dateEndProperty.ui as SFUISchemaItem),
@@ -270,13 +270,7 @@ export class SFComponent implements OnInit, OnChanges, OnDestroy {
 
         if (property.items) {
           uiRes[uiKey].$items = uiRes[uiKey].$items || {};
-          inFn(
-            property.items,
-            property.items,
-            (uiSchema[uiKey] || {}).$items || {},
-            ui,
-            uiRes[uiKey].$items,
-          );
+          inFn(property.items, property.items, (uiSchema[uiKey] || {}).$items || {}, ui, uiRes[uiKey].$items);
         }
 
         if (property.properties && Object.keys(property.properties).length) {
@@ -286,8 +280,8 @@ export class SFComponent implements OnInit, OnChanges, OnDestroy {
     };
 
     const inIfFn = (schema: SFSchema, ui: SFUISchemaItemRun) => {
-      Object.keys(schema.properties).forEach(key => {
-        const property = schema.properties[key];
+      Object.keys(schema.properties!).forEach(key => {
+        const property = schema.properties![key];
         const uiKey = `$${key}`;
         resolveIf(property, ui[uiKey]);
         if (property.items) {
@@ -337,25 +331,22 @@ export class SFComponent implements OnInit, OnChanges, OnDestroy {
     const firstKey = Object.keys(this._ui).find(w => w.startsWith('$'));
     if (this.layout === 'horizontal') {
       const btnUi = firstKey ? this._ui[firstKey] : this._defUi;
-      if (!this._btn.render.grid) {
-        this._btn.render.grid = {
+      if (!this._btn.render!.grid) {
+        this._btn.render!.grid = {
           offset: btnUi.spanLabel,
           span: btnUi.spanControl,
         };
       }
       // fixed label
-      if (this._btn.render.spanLabelFixed == null) {
-        this._btn.render.spanLabelFixed = btnUi.spanLabelFixed;
+      if (this._btn.render!.spanLabelFixed == null) {
+        this._btn.render!.spanLabelFixed = btnUi.spanLabelFixed;
       }
       // 固定标签宽度时，若不指定样式，则默认居中
-      if (
-        !this._btn.render.class &&
-        (typeof btnUi.spanLabelFixed === 'number' && btnUi.spanLabelFixed > 0)
-      ) {
-        this._btn.render.class = 'text-center';
+      if (!this._btn.render!.class && (typeof btnUi.spanLabelFixed === 'number' && btnUi.spanLabelFixed > 0)) {
+        this._btn.render!.class = 'text-center';
       }
     } else {
-      this._btn.render.grid = {};
+      this._btn.render!.grid = {};
     }
     if (this._mode) {
       this.mode = this._mode;
@@ -369,7 +360,11 @@ export class SFComponent implements OnInit, OnChanges, OnDestroy {
     this.validator();
   }
 
-  ngOnChanges(): void {
+  ngOnChanges(changes: { [P in keyof this]?: SimpleChange } & SimpleChanges): void {
+    if (changes.loading && Object.keys(changes).length === 1) {
+      this.cdr.detectChanges();
+      return;
+    }
     this.refreshSchema();
   }
 
@@ -385,7 +380,7 @@ export class SFComponent implements OnInit, OnChanges, OnDestroy {
 
   private attachCustomRender() {
     this._renders.forEach((tpl, path) => {
-      const property = this.rootProperty.searchProperty(path);
+      const property = this.rootProperty!.searchProperty(path);
       if (property == null) {
         return;
       }
@@ -394,10 +389,10 @@ export class SFComponent implements OnInit, OnChanges, OnDestroy {
   }
 
   validator(): this {
-    this.rootProperty._runValidation();
-    const errors = this.rootProperty.errors;
+    this.rootProperty!._runValidation();
+    const errors = this.rootProperty!.errors;
     this._valid = !(errors && errors.length);
-    if (!this._valid) this.formError.emit(errors);
+    if (!this._valid) this.formError.emit(errors!);
     this.cdr.detectChanges();
     return this;
   }
@@ -409,8 +404,7 @@ export class SFComponent implements OnInit, OnChanges, OnDestroy {
     if (newSchema) this.schema = newSchema;
     if (newUI) this.ui = newUI;
 
-    if (!this.schema || typeof this.schema.properties === 'undefined')
-      throw new Error(`Invalid Schema`);
+    if (!this.schema || typeof this.schema.properties === 'undefined') throw new Error(`Invalid Schema`);
     if (this.schema.ui && typeof this.schema.ui === 'string')
       throw new Error(`Don't support string with root ui property`);
 
@@ -425,11 +419,7 @@ export class SFComponent implements OnInit, OnChanges, OnDestroy {
     this.coverProperty();
     this.coverButtonProperty();
 
-    this.rootProperty = this.formPropertyFactory.createProperty(
-      this._schema,
-      this._ui,
-      this.formData,
-    );
+    this.rootProperty = this.formPropertyFactory.createProperty(this._schema, this._ui, this.formData);
     this.attachCustomRender();
 
     this.rootProperty.valueChanges.subscribe(value => {
@@ -438,7 +428,7 @@ export class SFComponent implements OnInit, OnChanges, OnDestroy {
     });
     this.rootProperty.errorsChanges.subscribe(errors => {
       this._valid = !(errors && errors.length);
-      this.formError.emit(errors);
+      this.formError.emit(errors!);
       this.cdr.detectChanges();
     });
 
@@ -450,7 +440,7 @@ export class SFComponent implements OnInit, OnChanges, OnDestroy {
    * @param [emit] 是否触发 `formReset` 事件，默认：`false`
    */
   reset(emit = false): this {
-    this.rootProperty.resetValue(this.formData, false);
+    this.rootProperty!.resetValue(this.formData, false);
     Promise.resolve().then(() => this.cdr.detectChanges());
     if (emit) {
       this.formReset.emit(this.value);

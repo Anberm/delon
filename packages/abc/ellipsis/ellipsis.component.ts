@@ -17,6 +17,7 @@ import { take } from 'rxjs/operators';
 
 @Component({
   selector: 'ellipsis',
+  exportAs: 'ellipsis',
   templateUrl: './ellipsis.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -77,14 +78,7 @@ export class EllipsisComponent implements AfterViewInit, OnChanges {
     }, '');
   }
 
-  private bisection(
-    th: number,
-    m: number,
-    b: number,
-    e: number,
-    text: string,
-    shadowNode: HTMLElement,
-  ): number {
+  private bisection(th: number, m: number, b: number, e: number, text: string, shadowNode: HTMLElement): number {
     const suffix = this.tail;
     let mid = m;
     let end = e;
@@ -145,7 +139,7 @@ export class EllipsisComponent implements AfterViewInit, OnChanges {
       if (el.children.length > 0) {
         throw new Error('Ellipsis content must be string.');
       }
-      const text = el.textContent;
+      const text = el.textContent!;
       const textLength = fullWidthRecognition ? this.getStrFullLength(text) : text.length;
       if (textLength <= length || length < 0) {
         this.text = text;
@@ -154,9 +148,7 @@ export class EllipsisComponent implements AfterViewInit, OnChanges {
         if (length - tail.length <= 0) {
           displayText = '';
         } else {
-          displayText = fullWidthRecognition
-            ? this.cutStrByFullLength(text, length)
-            : text.slice(0, length);
+          displayText = fullWidthRecognition ? this.cutStrByFullLength(text, length) : text.slice(0, length);
         }
         this.text = displayText + tail;
       }
@@ -164,8 +156,8 @@ export class EllipsisComponent implements AfterViewInit, OnChanges {
     } else if (type === 'line') {
       const { shadowOrgEl, shadowTextEl } = this;
       const orgNode = shadowOrgEl.nativeElement as HTMLElement;
-      const text = orgNode.innerText || orgNode.textContent;
-      const lineHeight = parseInt(getComputedStyle(this.getEl('.ellipsis')).lineHeight, 10);
+      const text = orgNode.innerText || orgNode.textContent!;
+      const lineHeight = parseInt(getComputedStyle(this.getEl('.ellipsis')).lineHeight!, 10);
       const targetHeight = lines * lineHeight;
       this.getEl('.ellipsis__handle').style.height = `${targetHeight}px`;
 
@@ -177,14 +169,7 @@ export class EllipsisComponent implements AfterViewInit, OnChanges {
         const len = text.length;
         const mid = Math.ceil(len / 2);
 
-        const count = this.bisection(
-          targetHeight,
-          mid,
-          0,
-          len,
-          text,
-          shadowTextEl.nativeElement.firstChild,
-        );
+        const count = this.bisection(targetHeight, mid, 0, len, text, shadowTextEl.nativeElement.firstChild);
         this.text = text;
         this.targetCount = count;
       }

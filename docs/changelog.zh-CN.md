@@ -4,7 +4,7 @@ title: 更新日志
 type: Other
 ---
 
-`ng-alain` 严格遵循 [Semantic Versioning 2.0.0](http://semver.org/lang/zh-CN/) 语义化版本规范。
+NG-ALAIN 严格遵循 [Semantic Versioning 2.0.0](http://semver.org/lang/zh-CN/) 语义化版本规范。
 
 #### 发布周期
 
@@ -14,7 +14,91 @@ type: Other
 
 ---
 
-## [7.1.0](https://github.com/ng-alain/delon/compare/7.0.3...7.1.0) (2019-03-29)
+## [7.3.2](https://github.com/ng-alain/delon/compare/7.3.1...7.3.2) (2019-05-03)
+
+### Scaffold
+
+* style: 更新 prettier HTML 配置 ([c0338ef](https://github.com/ng-alain/ng-alain/commit/c0338ef))
+* perf: 优化所有DEMO ([#1062](https://github.com/ng-alain/ng-alain/pull/1062))
+
+### Bug Fixes
+
+* **abc:se:** 修复内联模式时应忽略标签的宽度 ([#553](https://github.com/ng-alain/delon/issues/553)) ([70322fa](https://github.com/ng-alain/delon/commit/70322fa))
+* **abc:st:** 修复 `res.process` 缺少 `rawData` 参数 ([#549](https://github.com/ng-alain/delon/issues/549)) ([102f53f](https://github.com/ng-alain/delon/commit/102f53f))
+* **theme:http:** 修复 `get` 泛型返回错误类型 ([#551](https://github.com/ng-alain/delon/issues/551)) ([b2e1482](https://github.com/ng-alain/delon/commit/b2e1482))
+* **util:deepMergeKey:** 修复忽略数组无法问题 ([#555](https://github.com/ng-alain/delon/issues/555)) ([6d4c1cc](https://github.com/ng-alain/delon/commit/6d4c1cc))
+
+### Performance Improvements
+
+* 使用 NG-ZORRO 二级入口 ([#548](https://github.com/ng-alain/delon/issues/548)) ([5d8bac1](https://github.com/ng-alain/delon/commit/5d8bac1))
+
+
+## [7.3.1](https://github.com/ng-alain/delon/compare/7.3.0...7.3.1) (2019-04-30)
+
+### Scaffold
+
+* 更新 `stylelint` 配置 ([#1054](https://github.com/ng-alain/ng-alain/pull/1054))
+
+### Bug Fixes
+
+* **abc:sv:** 修复内容包含块会引起错位 ([#545](https://github.com/ng-alain/delon/issues/545)) ([a3191a3](https://github.com/ng-alain/delon/commit/a3191a3))
+* **cli:** 修复最新版本 stylelint 导致 `lint:style` 命令无效 ([#541](https://github.com/ng-alain/delon/issues/541)) ([1d41e82](https://github.com/ng-alain/delon/commit/1d41e82))
+* **form:*:** 修复 `ViewDestroyedError` 错误 ([#542](https://github.com/ng-alain/delon/issues/542)) ([5d8ffa4](https://github.com/ng-alain/delon/commit/5d8ffa4))
+* **theme:http:** 修复 `get` 泛型部分参数应可选 ([#546](https://github.com/ng-alain/delon/issues/546)) ([359159c](https://github.com/ng-alain/delon/commit/359159c))
+
+
+# [7.3.0](https://github.com/ng-alain/delon/compare/7.2.0...7.3.0) (2019-04-26)
+
+### Scaffold
+
+* 401 不需要提示请求错误 ([#1023](https://github.com/ng-alain/ng-alain/pull/1023))
+* 升级 `screenfull` 至 `4.2.0` ([#1031](https://github.com/ng-alain/ng-alain/pull/1031))
+* 更新 `prettier` 配置 ([#1034](https://github.com/ng-alain/ng-alain/pull/1034))
+
+### Bug Fixes
+
+* **abc:st:** 修复切换页数会触发两次数据加载 ([#539](https://github.com/ng-alain/delon/issues/539)) ([12ad96f](https://github.com/ng-alain/delon/commit/12ad96f))
+* **form:*:** 修复异步数据渲染不正确 ([#525](https://github.com/ng-alain/delon/issues/525)) ([d4d4428](https://github.com/ng-alain/delon/commit/d4d4428))
+* **form:date:** 修复当未包含 `end` 属性时抛出异常 ([#527](https://github.com/ng-alain/delon/issues/527)) ([f06757c](https://github.com/ng-alain/delon/commit/f06757c))
+* **form:select:** 修复国际化 ([#524](https://github.com/ng-alain/delon/issues/524)) ([1df658c](https://github.com/ng-alain/delon/commit/1df658c))
+* **form:upload:** 修复移除文件列表时应更新清空值 ([#526](https://github.com/ng-alain/delon/issues/526)) ([0f4e1c5](https://github.com/ng-alain/delon/commit/0f4e1c5))
+* **theme:drawer:** 修复默认值问题 ([#535](https://github.com/ng-alain/delon/issues/535)) ([9c588eb](https://github.com/ng-alain/delon/commit/9c588eb))
+* **theme:modal:** 修复 `nzWrapClassName` 和 `size` 存在时无法并存问题 ([#537](https://github.com/ng-alain/delon/issues/537)) ([c64834a](https://github.com/ng-alain/delon/commit/c64834a))
+
+### Features
+
+* **abc:st:** 新增 `showExpand` 属性 ([#520](https://github.com/ng-alain/delon/issues/520)) ([d87d56f](https://github.com/ng-alain/delon/commit/d87d56f))
+* **abc:st:** 新增 `widthMode` 属性 ([#518](https://github.com/ng-alain/delon/issues/518)) ([715d5de](https://github.com/ng-alain/delon/commit/715d5de))
+* **abc:st:** 新增完全受控 `loading` 属性 ([#533](https://github.com/ng-alain/delon/issues/533)) ([317b88c](https://github.com/ng-alain/delon/commit/317b88c))
+* **acl:** 新增 `*aclIf` 结构化指令 ([#529](https://github.com/ng-alain/delon/issues/529)) ([cf49779](https://github.com/ng-alain/delon/commit/cf49779))
+* **form:** 新增按钮图标配置属性 ([#538](https://github.com/ng-alain/delon/issues/538)) ([0ef4281](https://github.com/ng-alain/delon/commit/0ef4281))
+* **form:** 新增 `loading` 属性 ([#517](https://github.com/ng-alain/delon/issues/517)) ([1e9df24](https://github.com/ng-alain/delon/commit/1e9df24))
+* **theme:yn:** 新增 `mode` 属性 ([#534](https://github.com/ng-alain/delon/issues/534)) ([ebd42be](https://github.com/ng-alain/delon/commit/ebd42be))
+* **theme:drawer:** 新增 `exact` 属性 ([#535](https://github.com/ng-alain/delon/issues/535)) ([9c588eb](https://github.com/ng-alain/delon/commit/9c588eb))
+
+### Special Thanks
+
+Amit0043, its404
+
+
+# [7.2.0](https://github.com/ng-alain/delon/compare/7.1.0...7.2.0) (2019-04-09)
+
+### Bug Fixes
+
+* **abc:_src:** 修复无效 `size` 属性 ([#503](https://github.com/ng-alain/delon/issues/503)) ([76fc61b](https://github.com/ng-alain/delon/commit/76fc61b))
+* **abc:reuse-tab:** 修复右击关闭其他或右侧标签应以当前选择项为基准 ([#500](https://github.com/ng-alain/delon/issues/500)) ([ed3eef7](https://github.com/ng-alain/delon/commit/ed3eef7))
+* **abc:st:** 修复点击扩展图标无法触发 `expand` 事件 ([#501](https://github.com/ng-alain/delon/issues/501)) ([a0a9c53](https://github.com/ng-alain/delon/commit/a0a9c53))
+* **cli:** 修复未指定 i18n 时提示未找到 `header-i18n` ([#505](https://github.com/ng-alain/delon/issues/505)) ([9839f69](https://github.com/ng-alain/delon/commit/9839f69))
+* **sf:** 修复内联模式错位 ([#514](https://github.com/ng-alain/delon/issues/514)) ([9a7901a](https://github.com/ng-alain/delon/commit/9a7901a))
+* **sf:radio:** 修复异步数据无法渲染 ([#504](https://github.com/ng-alain/delon/issues/504)) ([18c6af5](https://github.com/ng-alain/delon/commit/18c6af5))
+
+### Features
+
+* **abc:reuse-tab:** 增加 `tabBarExtraContent` `tabBarStyle` `tabBarGutter` 属性 ([#510](https://github.com/ng-alain/delon/issues/510)) ([5d48933](https://github.com/ng-alain/delon/commit/5d48933))
+* **acl:** 增加全局 `preCan` 属性，更好的定制 ACL 权限 ([#511](https://github.com/ng-alain/delon/issues/511)) ([1bdbd8c](https://github.com/ng-alain/delon/commit/1bdbd8c))
+
+
+# [7.1.0](https://github.com/ng-alain/delon/compare/7.0.3...7.1.0) (2019-03-29)
 
 ### Bug Fixes
 
@@ -72,11 +156,11 @@ type: Other
 
 # [7.0.0](https://github.com/ng-alain/delon/compare/7.0.0-rc.10...7.0.0) (2019-02-28)
 
-**一切安好，一直在等待 ng-zorro-antd 7.0.0 正式版，它是我们的基础组件，因此本次更新只是保持主版本号的同步**
+**一切安好，一直在等待 NG-ZORRO 7.0.0 正式版，它是我们的基础组件，因此本次更新只是保持主版本号的同步**
 
 ### Features
 
-* 同步 ng-zorro-antd 7.0.0
+* 同步 NG-ZORRO 7.0.0
 * 新增希腊 `el_GR` 语言 ([#423](https://github.com/ng-alain/delon/issues/423)) ([17a03d6](https://github.com/ng-alain/delon/commit/17a03d6))
 
 

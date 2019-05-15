@@ -32,11 +32,7 @@ export function overwritePackage(host: Tree, json: any) {
  * addPackageToPackageJson(host, [ '＠delon/abc＠^1.0.0' ], 'devDependencies')
  * ```
  */
-export function addPackageToPackageJson(
-  host: Tree,
-  pkg: string | string[],
-  type = 'dependencies',
-): Tree {
+export function addPackageToPackageJson(host: Tree, pkg: string | string[], type = 'dependencies'): Tree {
   const json = getJSON(host, 'package.json', type);
   if (json == null) return host;
 
@@ -60,11 +56,7 @@ export function addPackageToPackageJson(
  * addPackageToPackageJson(host, [ '＠delon/abc' ], 'devDependencies')
  * ```
  */
-export function removePackageFromPackageJson(
-  host: Tree,
-  pkg: string | string[],
-  type = 'dependencies',
-): Tree {
+export function removePackageFromPackageJson(host: Tree, pkg: string | string[], type = 'dependencies'): Tree {
   const json = getJSON(host, 'package.json', type);
   if (json == null) return host;
 
@@ -94,8 +86,8 @@ export function scriptsToAngularJson(
   const json = getAngular(host);
   const project = getProjectFromWorkspace(json, projectName);
   types.forEach(type => {
-    const scriptsNode = (project.targets || project.architect)[type]!.options!.scripts as string[];
-    const stylesNode = (project.targets || project.architect)[type]!.options!.styles as string[];
+    const scriptsNode = (project.targets || project.architect)![type]!.options!.scripts as string[];
+    const stylesNode = (project.targets || project.architect)![type]!.options!.styles as string[];
     for (const path of resources) {
       const list = path.endsWith('.js') ? scriptsNode : stylesNode;
       if (clean === true) list.length = 0;

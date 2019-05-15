@@ -1,5 +1,5 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
-import { NzMentionComponent } from 'ng-zorro-antd';
+import { NzMentionComponent } from 'ng-zorro-antd/mention';
 import { Observable } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
 import { SFValue } from '../../interface';
@@ -30,7 +30,7 @@ export class MentionWidget extends ControlWidget implements OnInit {
     const max = typeof this.schema.maximum !== 'undefined' ? this.schema.maximum : -1;
 
     if (!this.ui.validator && (min !== -1 || max !== -1)) {
-      this.ui.validator = () => {
+      this.ui.validator = (() => {
         const count = this.mentionChild.getMentions().length;
         if (min !== -1 && count < min) {
           return [{ keyword: 'mention', message: `最少提及 ${min} 次` }];
@@ -39,11 +39,11 @@ export class MentionWidget extends ControlWidget implements OnInit {
           return [{ keyword: 'mention', message: `最多提及 ${max} 次` }];
         }
         return null;
-      };
+      }) as any;
     }
   }
 
-  reset(value: SFValue) {
+  reset(_value: SFValue) {
     getData(this.schema, this.ui, null).subscribe(list => {
       this.data = list;
       this.detectChanges();
@@ -61,7 +61,7 @@ export class MentionWidget extends ControlWidget implements OnInit {
     (this.ui.loadData(option) as Observable<SFSchemaEnumType[]>)
       .pipe(
         tap(() => (this.loading = false)),
-        map(res => getEnum(res, null, this.schema.readOnly)),
+        map(res => getEnum(res, null, this.schema.readOnly!)),
       )
       .subscribe(res => {
         this.data = res;

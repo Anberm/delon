@@ -1,5 +1,4 @@
 import { Component, OnInit } from '@angular/core';
-import { LocaleData } from '@delon/theme';
 import { SFValue } from '../../interface';
 import { SFSchemaEnum } from '../../schema';
 import { getData, toBool } from '../../utils';
@@ -27,7 +26,7 @@ export class CascaderWidget extends ControlWidget implements OnInit {
     }
   }
 
-  reset(value: SFValue) {
+  reset(_value: SFValue) {
     getData(this.schema, {}, this.formProperty.formData).subscribe(list => {
       this.data = list;
       this.detectChanges();

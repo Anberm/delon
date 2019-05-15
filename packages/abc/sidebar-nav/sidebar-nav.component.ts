@@ -13,11 +13,10 @@ import {
   Renderer2,
 } from '@angular/core';
 import { NavigationEnd, Router } from '@angular/router';
-import { Subject } from 'rxjs';
-import { filter, takeUntil } from 'rxjs/operators';
-
 import { Menu, MenuService, SettingsService, WINDOW } from '@delon/theme';
 import { InputBoolean } from '@delon/util';
+import { Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
 
 import { Nav } from './sidebar-nav.types';
 
@@ -26,6 +25,7 @@ const FLOATINGCLS = 'sidebar-nav__floating';
 
 @Component({
   selector: 'sidebar-nav',
+  exportAs: 'sidebarNav',
   templateUrl: './sidebar-nav.component.html',
   host: {
     '(click)': '_click()',
@@ -70,14 +70,14 @@ export class SidebarNavComponent implements OnInit, OnDestroy {
     if (linkNode.nodeName !== 'A') {
       return false;
     }
-    const id = +linkNode.dataset!.id;
+    const id = +linkNode.dataset!.id!;
     let item: Nav;
     this.menuSrv.visit(this._d, i => {
       if (!item && i.__id === id) {
         item = i;
       }
     });
-    this.to(item);
+    this.to(item!);
     this.hideAll();
     e.preventDefault();
     return false;
@@ -104,7 +104,7 @@ export class SidebarNavComponent implements OnInit, OnDestroy {
 
   private genSubNode(linkNode: HTMLLinkElement, item: Nav): HTMLUListElement {
     const id = `_sidebar-nav-${item.__id}`;
-    const node = linkNode.nextElementSibling.cloneNode(true) as HTMLUListElement;
+    const node = linkNode.nextElementSibling!.cloneNode(true) as HTMLUListElement;
     node.id = id;
     node.classList.add(FLOATINGCLS);
     node.addEventListener(
@@ -167,12 +167,12 @@ export class SidebarNavComponent implements OnInit, OnDestroy {
       }
       return false;
     }
-    this.ngZone.run(() => this.router.navigateByUrl(item.link));
+    this.ngZone.run(() => this.router.navigateByUrl(item.link!));
   }
 
   toggleOpen(item: Nav) {
     if (!this.openStrictly) {
-      this.menuSrv.visit(this._d, (i, p) => {
+      this.menuSrv.visit(this._d, i => {
         if (i !== item) i._open = false;
       });
       let pItem = item.__parent;
@@ -217,16 +217,13 @@ export class SidebarNavComponent implements OnInit, OnDestroy {
       this.list = menuSrv.menus;
       cdr.detectChanges();
     });
-    router.events
-      .pipe(
-        takeUntil(unsubscribe$),
-        filter(e => e instanceof NavigationEnd),
-      )
-      .subscribe((e: NavigationEnd) => {
+    router.events.pipe(takeUntil(unsubscribe$)).subscribe(e => {
+      if (e instanceof NavigationEnd) {
         this.menuSrv.openedByUrl(e.urlAfterRedirects, this.recursivePath);
         this.underPad();
         this.cdr.detectChanges();
-      });
+      }
+    });
     this.underPad();
   }
 
