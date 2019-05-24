@@ -16,6 +16,7 @@ import {
   SimpleChange,
   SimpleChanges,
   TemplateRef,
+  ViewEncapsulation,
 } from '@angular/core';
 import { Router } from '@angular/router';
 import {
@@ -64,7 +65,9 @@ import {
   exportAs: 'st',
   templateUrl: './table.component.html',
   providers: [STDataSource, STRowSource, STColumnSource, STExport, CNCurrencyPipe, DatePipe, YNPipe, DecimalPipe],
+  preserveWhitespaces: false,
   changeDetection: ChangeDetectionStrategy.OnPush,
+  encapsulation: ViewEncapsulation.None,
 })
 export class STComponent implements AfterViewInit, OnChanges, OnDestroy {
   private unsubscribe$ = new Subject<void>();
@@ -178,6 +181,7 @@ export class STComponent implements AfterViewInit, OnChanges, OnDestroy {
   /** 额外 `body` 内容 */
   @Input() body: TemplateRef<STStatisticalResults>;
   @Input() @InputBoolean() expandRowByClick = false;
+  @Input() @InputBoolean() expandAccordion = false;
   /** `expand` 可展开，当数据源中包括 `expand` 表示展开状态 */
   @Input() expand: TemplateRef<{ $implicit: {}; column: STColumn }>;
   @Input() noResult: string | TemplateRef<void>;
@@ -411,11 +415,16 @@ export class STComponent implements AfterViewInit, OnChanges, OnDestroy {
   }
 
   private rowClickCount = 0;
+  private closeOtherExpand(item: STData) {
+    if (this.expandAccordion === false) return;
+    this._data.filter(i => i !== item).forEach(i => (i.expand = false));
+  }
   _rowClick(e: Event, item: STData, index: number) {
     if ((e.target as HTMLElement).nodeName === 'INPUT') return;
     const { expand, expandRowByClick, rowClickTime } = this;
     if (!!expand && item.showExpand !== false && expandRowByClick) {
       item.expand = !item.expand;
+      this.closeOtherExpand(item);
       this.changeEmit('expand', item);
       return;
     }
@@ -433,6 +442,7 @@ export class STComponent implements AfterViewInit, OnChanges, OnDestroy {
   }
 
   _expandChange(item: STData): void {
+    this.closeOtherExpand(item);
     this.changeEmit('expand', item);
   }
 
