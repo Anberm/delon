@@ -16,6 +16,18 @@ npm run build
 
 NG-ALAIN 本身是一个 Angular CLI 项目，因此也可以参照 [Build](https://angular.io/cli/build) 完成更复杂的构建需求。构建打包成功之后，会在根目录生成 `dist` 文件夹，里面就是构建打包好的文件，包含若干 `*.js`、`*.css`、`index.html` 等静态文件。
 
+### JavaScript heap out of memory
+
+避免执行 `ng build` 时抛出 **JavaScript heap out of memory**：
+
+```json
+{
+  "scripts": {
+    "build": "node --max_old_space_size=5120 ./node_modules/@angular/cli/bin/ng build --prod"
+  }
+}
+```
+
 ### 环境变量
 
 当你需要区别开发和部署以及测试环境的时候，可以通过 `src/environments` 文件夹根据不同环境配置相应的参数，配置项同时也可以在应用当中直接调用它们。同时，还需要配置 `angular.json` 内的配置项，最后你可以透过命令改变环境配置。
@@ -59,7 +71,7 @@ ng build --prod --sourcemaps
 如果你的静态资源是部署到其他域名（例如独立的 cdn 地址），你可以透过 `-d` 参数指定一个 cdn 地址。
 
 ```bash
-ng build --prod --build-optimizer -d=//cdn.ng-alain.com/
+ng build --prod -d=//cdn.ng-alain.com/
 ```
 
 这样生成的 `index.html` 内 `*.js`、`*.css` 会自动加上 `//cdn.ng-alain.com/*.js`。

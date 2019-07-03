@@ -23,8 +23,7 @@ Generate a set of button group with a simple configuration (example code: [DemoM
 import { Component } from '@angular/core';
 import { STColumn } from '@delon/abc';
 import { NzMessageService } from 'ng-zorro-antd';
-import { DemoModalComponent } from '@shared/components/dialog/modal.component';
-import { DemoDrawerComponent } from '@shared/components/dialog/drawer.component';
+import { DemoModalComponent, DemoDrawerComponent } from '@shared';
 
 @Component({
   selector: 'app-demo',
@@ -71,6 +70,13 @@ export class DemoComponent {
           click: (_record, modal) => this.message.success(`重新加载页面，回传值：${JSON.stringify(modal)}`),
         },
         {
+          icon: 'check-circle',
+          click: record => this.message.info(`check-${record.name}`),
+          iif: record => record.id % 2 === 0,
+          iifBehavior: 'disabled',
+          tooltip: `Is disabled button`,
+        },
+        {
           icon: 'delete',
           type: 'del',
           click: (record, _modal, comp) => {
@@ -90,6 +96,13 @@ export class DemoComponent {
               text: `重新开始`,
               icon: 'edit',
               click: record => this.message.success(`重新开始【${record.name}】`),
+            },
+            {
+              text: `审核`,
+              click: record => this.message.info(`check-${record.name}`),
+              iif: record => record.id % 2 === 0,
+              iifBehavior: 'disabled',
+              tooltip: 'This is tooltip',
             },
           ],
         },

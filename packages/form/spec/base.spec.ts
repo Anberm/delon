@@ -13,6 +13,7 @@ import { DelonFormModule } from '../src/module';
 import { SFSchema } from '../src/schema';
 import { SFUISchema } from '../src/schema/ui';
 import { SFComponent } from '../src/sf.component';
+import { SF_SEQ } from '../src/const';
 
 export const SCHEMA = {
   user: {
@@ -31,17 +32,10 @@ export const SCHEMA = {
 let fixture: ComponentFixture<TestFormComponent>;
 let dl: DebugElement;
 let context: TestFormComponent;
-export function builder(options?: {
-  detectChanges?: boolean;
-  template?: string;
-  ingoreAntd?: boolean;
-  imports?: any[];
-}) {
+export function builder(options?: { detectChanges?: boolean; template?: string; ingoreAntd?: boolean; imports?: any[] }) {
   options = { detectChanges: true, ...options };
   TestBed.configureTestingModule({
-    imports: [NoopAnimationsModule, AlainThemeModule.forRoot(), DelonFormModule.forRoot()].concat(
-      options.imports || [],
-    ),
+    imports: [NoopAnimationsModule, AlainThemeModule.forRoot(), DelonFormModule.forRoot()].concat(options.imports || []),
     declarations: [TestFormComponent],
   });
   if (options.template) {
@@ -112,7 +106,7 @@ export class SFPage {
   }
 
   private fixPath(path: string) {
-    return path.startsWith('/') ? path : '/' + path;
+    return path.startsWith(SF_SEQ) ? path : SF_SEQ + path;
   }
 
   getValue(path: string): any {
@@ -120,9 +114,12 @@ export class SFPage {
     return this.comp.getValue(path);
   }
 
-  setValue(path: string, value: any): this {
+  setValue(path: string, value: any, dc = 0): this {
     path = this.fixPath(path);
     this.comp.setValue(path, value);
+    if (dc > 0) {
+      this.dc(dc);
+    }
     return this;
   }
 
@@ -157,7 +154,7 @@ export class SFPage {
   }
   /** 下标从 `1` 开始 */
   remove(index = 1): this {
-    this.getEl(`.sf__array-container [data-index="${index - 1}"] .remove`).click();
+    this.getEl(`.sf__array-container [data-index="${index - 1}"] .sf__array-remove`).click();
     return this;
   }
 
@@ -260,8 +257,14 @@ export class SFPage {
     return this;
   }
 
+  checkInput(cls: string, value: any, viaDocument = false): this {
+    const ipt = (viaDocument ? document.querySelector(cls) : dl.query(By.css(cls)).nativeElement) as HTMLInputElement;
+    expect(ipt.value).toBe(value);
+    return this;
+  }
+
   checkError(text: string): this {
-    const el = this.getEl('nz-form-explain');
+    const el = this.getEl('.ant-form-explain');
     if (text == null) {
       expect(el == null).toBe(true);
       return this;
@@ -299,8 +302,12 @@ export class SFPage {
     return this;
   }
 
-  dc() {
+  dc(time = 0) {
     fixture.detectChanges();
+    if (time > 0) {
+      this.time(time);
+      fixture.detectChanges();
+    }
     return this;
   }
 
@@ -324,6 +331,7 @@ export class SFPage {
       [autocomplete]="autocomplete"
       [firstVisual]="firstVisual"
       [onlyVisual]="onlyVisual"
+      [disabled]="disabled"
       [loading]="loading"
       (formChange)="formChange($event)"
       (formSubmit)="formSubmit($event)"
@@ -333,7 +341,7 @@ export class SFPage {
   `,
 })
 export class TestFormComponent {
-  @ViewChild('comp') comp: SFComponent;
+  @ViewChild('comp', { static: true }) comp: SFComponent;
   mode: 'default' | 'search' | 'edit' = 'default';
   layout = 'horizontal';
   schema: SFSchema | null = SCHEMA.user;
@@ -344,6 +352,7 @@ export class TestFormComponent {
   autocomplete: 'on' | 'off';
   firstVisual = true;
   onlyVisual = false;
+  disabled = false;
   loading = false;
 
   formChange() {}

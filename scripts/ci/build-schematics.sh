@@ -55,7 +55,6 @@ DEPENDENCIES=$(node -p "
     '@ngx-translate/http-loader',
     'tslint-config-prettier',
     'tslint-language-service',
-    'editorconfig-tools',
     'lint-staged',
     'husky',
     'prettier',
@@ -67,7 +66,8 @@ DEPENDENCIES=$(node -p "
     '@antv/g2-plugin-slider',
     '@angularclass/hmr',
     'ng-alain-codelyzer',
-    'ng-alain-sts'
+    'ng-alain-sts',
+    'antd-theme-generator'
   ].map(key => key.replace(/\//g, '\\\\/').replace(/-/g, '\\\\-') + '|' + (vs[key] || dvs[key])).join('\n\t');
 ")
 ZORROVERSION=$(node -p "require('./package.json').dependencies['ng-zorro-antd']")
@@ -114,6 +114,7 @@ copyFiles() {
     "${1}.prettierignore|${2}application/files/root/__dot__prettierignore"
     "${1}.prettierrc|${2}application/files/root/__dot__prettierrc"
     "${1}.stylelintrc|${2}application/files/root/__dot__stylelintrc"
+    "${1}tslint.json|${2}application/files/root"
     # cli
     # "${1}_cli-tpl|${2}application/files/root/"
     # ci
@@ -250,41 +251,41 @@ integrationCli() {
   echo ">>> Running npm run icon"
   npm run icon
   echo ">>> Running build"
-  ng build --prod --build-optimizer
+  node --max_old_space_size=5120 ./node_modules/@angular/cli/bin/ng build --prod
   cd ../../
   echo ">>> Current dir: ${PWD}"
 }
 
 if [[ ${BUILD} == true ]]; then
   travisFoldStart "BUILD"
-  
+
     tsconfigFile=${SOURCE}/tsconfig.json
     DIST=${PWD}/dist/ng-alain/
     buildCLI
-  
+
   travisFoldEnd "BUILD"
 fi
 
 if [[ ${TEST} == true ]]; then
   travisFoldStart "TEST"
-  
+
     tsconfigFile=${SOURCE}/tsconfig.spec.json
     DIST=${PWD}/dist/schematics-test/
     buildCLI
     $JASMINE "${DIST}/**/*.spec.js"
-  
+
   travisFoldEnd "TEST"
 fi
 
 if [[ ${INTEGRATION} == true ]]; then
   travisFoldStart "INTEGRATION"
-  
+
     tsconfigFile=${SOURCE}/tsconfig.json
     DIST=${PWD}/dist/ng-alain/
     COPY=true
     buildCLI
     integrationCli
-  
+
   travisFoldEnd "INTEGRATION"
 fi
 

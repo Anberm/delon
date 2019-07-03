@@ -22,11 +22,13 @@ import {
   STStatisticalResult,
   STStatisticalResults,
   STStatisticalType,
+  STColumnFilter,
 } from './table.interfaces';
 
 export interface STDataSourceOptions {
   pi: number;
   ps: number;
+  paginator: boolean;
   data: string | STData[] | Observable<STData[]>;
   total: number;
   req: STReq;
@@ -64,13 +66,13 @@ export class STDataSource {
     @Host() private ynPipe: YNPipe,
     @Host() private numberPipe: DecimalPipe,
     private dom: DomSanitizer,
-  ) { }
+  ) {}
 
   process(options: STDataSourceOptions): Promise<STDataSourceResult> {
     return new Promise((resolvePromise, rejectPromise) => {
       let data$: Observable<STData[]>;
       let isRemote = false;
-      const { data, res, total, page, pi, ps, columns } = options;
+      const { data, res, total, page, pi, ps, paginator, columns } = options;
       let retTotal: number;
       let retPs: number;
       let retList: STData[];
@@ -130,9 +132,10 @@ export class STDataSource {
             columns
               .filter(w => w.filter)
               .forEach(c => {
-                const values = c.filter!.menus.filter(w => w.checked);
+                const filter = c.filter!;
+                const values = this.getFilteredData(filter);
                 if (values.length === 0) return;
-                const onFilter = c.filter!.fn;
+                const onFilter = filter.fn;
                 if (typeof onFilter !== 'function') {
                   console.warn(`[st] Muse provide the fn function in filter`);
                   return;
@@ -143,7 +146,7 @@ export class STDataSource {
           }),
           // paging
           map((result: STData[]) => {
-            if (page.front) {
+            if (paginator && page.front) {
               const maxPageIndex = Math.ceil(result.length / ps);
               retPi = Math.max(1, pi > maxPageIndex ? maxPageIndex : pi);
               retTotal = result.length;
@@ -227,20 +230,22 @@ export class STDataSource {
   }
 
   private getByHttp(url: string, options: STDataSourceOptions): Observable<{}> {
-    const { req, page, pi, ps, singleSort, multiSort, columns } = options;
+    const { req, page, paginator, pi, ps, singleSort, multiSort, columns } = options;
     const method = (req.method || 'GET').toUpperCase();
     let params = {};
     const reName = req.reName as STReqReNameType;
-    if (req.type === 'page') {
-      params = {
-        [reName.pi as string]: page.zeroIndexed ? pi - 1 : pi,
-        [reName.ps as string]: ps,
-      };
-    } else {
-      params = {
-        [reName.skip as string]: (pi - 1) * ps,
-        [reName.limit as string]: ps,
-      };
+    if (paginator) {
+      if (req.type === 'page') {
+        params = {
+          [reName.pi as string]: page.zeroIndexed ? pi - 1 : pi,
+          [reName.ps as string]: ps,
+        };
+      } else {
+        params = {
+          [reName.skip as string]: (pi - 1) * ps,
+          [reName.limit as string]: ps,
+        };
+      }
     }
     params = {
       ...params,
@@ -343,17 +348,22 @@ export class STDataSource {
 
   // #region filter
 
+  private getFilteredData(filter: STColumnFilter) {
+    return filter.type === 'default' ? filter.menus!.filter(f => f.checked === true) : filter.menus!.slice(0, 1);
+  }
+
   private getReqFilterMap(columns: STColumn[]): { [key: string]: string } {
     let ret = {};
     columns
       .filter(w => w.filter && w.filter.default === true)
       .forEach(col => {
-        const values = col.filter!.menus.filter(f => f.checked === true);
+        const filter = col.filter!;
+        const values = this.getFilteredData(filter);
         let obj: {} = {};
-        if (col.filter!.reName) {
-          obj = col.filter!.reName!(col.filter!.menus, col);
+        if (filter.reName) {
+          obj = filter.reName!(filter.menus!, col);
         } else {
-          obj[col.filter!.key!] = values.map(i => i.value).join(',');
+          obj[filter.key!] = values.map(i => i.value).join(',');
         }
         ret = { ...ret, ...obj };
       });

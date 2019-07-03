@@ -54,8 +54,13 @@ Property | Description | Type | Default
 `[widthMode]` | Set the table width mode | `STWidthMode` | -
 `[rowClassName]` | Row class name of table | `(record: STData, index: number) => string` | -
 `[loading]` | Loading status of table, when specifying `null` is controlled by st | `boolean | null` | `null`
+`[loadingIndicator]` | The spinning indicator | `TemplateRef<void>` | -
 `[loadingDelay]` | Specifies a delay in milliseconds for loading state (prevent flush) | `number` | `0`
 `[scroll]` | Whether table can be scrolled in x/y direction, x or y can be a string that indicates the width and height of table body | `{ y?: string; x?: string }` | -
+`[virtualScroll]` | Enable virtual scroll mode，work with `[nzScroll]` | `boolean` | `false`
+`[virtualItemSize]` | The size of the items in the list, same as [cdk itemSize](https://material.angular.io/cdk/scrolling/api) | `number` | `54`
+`[virtualMaxBufferPx]` | The number of pixels worth of buffer to render for when rendering new items, same as [cdk maxBufferPx](https://material.angular.io/cdk/scrolling/api) | `number` | `200`
+`[virtualMinBufferPx]` | The minimum amount of buffer rendered beyond the viewport (in pixels),same as [cdk minBufferPx](https://material.angular.io/cdk/scrolling/api) | `number` | `100`
 `[singleSort]` | Single sort config<br>If not specified, return: `columnName=ascend|descend`<br>If specified, return: `sort=columnName.(ascend|descend)` | `STSingleSort` | `null`
 `[multiSort]` | Whether to mulit-sort, recommended use in URL data source | `boolean, STMultiSort` | `false`
 `[rowClickTime]` | Click twice in the time range for double click, unit is millisecond | `number` | `200`
@@ -72,11 +77,12 @@ Property | Description | Type | Default
 `(change)` | Events | `EventEmitter<STChange>` | -
 `(error)` | Error event | `EventEmitter<STError>` | -
 
-### Methods
+### Properties & Methods
 
 Name | Description
 ---- | -----------
-`resetColumns()` | Reset columns
+`filteredData` | Get all data after filtering & sorting<br>- Local data: including sorting, filtering<br>- Remote data: Don't pass `pi`, `ps` parameters in http request
+`resetColumns(options?: STResetColumnsOption)` | Reset columns
 `load(pi = 1, extraParams?: any, options?: STLoadOptions)` | Load specified page
 `reload(extraParams?: any, options?: STLoadOptions)` | Refresh current page
 `reset(extraParams?: any, options?: STLoadOptions)` | Reset data and `pi` to `1`, including single multi-select, sort, filter status (Covered default state)
@@ -85,7 +91,7 @@ Name | Description
 `clearStatus()` | Clean all status (like this: single multi-select, sort, filter status)
 `clearCheck()` | Clear all `checkbox`
 `clearRadio()` | Clear all `radio`
-`export(newData?: any[], opt?: STExportOptions)` | Export Excel and make sure you have imported `XlsxModule`
+`export(newData?: STData[] | true, opt?: STExportOptions)` | Export Excel and make sure you have imported `XlsxModule`
 
 Some details:
 
@@ -103,7 +109,7 @@ Some details:
   `
 })
 class TestComponent {
-  @ViewChild('st') comp: STComponent;
+  @ViewChild('st', { static: false }) comp: STComponent;
   // this.comp.load();
 }
 ```
@@ -134,7 +140,8 @@ Property | Description | Type | Default
 -------- | ----------- | ---- | -------
 `[front]` | Front paging when `data` is `any[]` or `Observable<any[]>` | `boolean` | `true`
 `[zeroIndexed]` | Whether the backend paging uses the `0` base index (only data is url) | `boolean` | `false`
-`[placement]` | Pager direction | `'left','center','right'` | `'right'`
+`[position]` | Specify the position of Pagination | `top,bottom,both` | `bottom`
+`[placement]` | Specify the direction of Pagination | `left,center,right` | `right`
 `[show]` | Whether to show pager | `boolean` | `true`
 `[showSize]` | Determine whether `ps` can be changed | `boolean` | `false`
 `[pageSizes]` | Specify the sizeChanger options | `number[]` | `[10, 20, 30, 40, 50]`
@@ -224,7 +231,7 @@ Property | Description | Type | Default
 `[index]` | Display field of the data record, could be set like `a.b.c` | `string, string[]` | -
 `[render]` | Custom render template ID | `string` | -
 `[renderTitle]` | Title custom render template ID | `string` | -
-`[default]` | Replace with default value when no data exists | `string` | -
+`[default]` | Replace with default value when no data exists (value typeof is `undefined`) | `string` | -
 `[buttons]` | Buttons of this column | `STColumnButton[]` | -
 `[width]` | Width of this column (**NOTICE:** If the fixed column must be a number), e.g: `100`, `10%`, `100px` | `string,number` | -
 `[fixed]` | Set column to be fixed, must specify `width` | `left,right` | -
@@ -259,13 +266,14 @@ Property | Description | Type | Default
 
 Property | Description | Type | Default
 -------- | ----------- | ---- | -------
+`[type]` | Type of the filter, `keyword` render by input | `default,keyword` | `default`
 `[menus]` | Filter menu config | `STColumnFilterMenu[]` | -
 `[fn]` | Filter function for local data | `(filter: STColumnFilterMenu, record: STData) => boolean` | -
 `[default]` | Whether the `data` is filtered | `boolean` | -
-`[icon]` | Customized filter icon | `string` | `filter`
+`[icon]` | Customized filter icon<br>When `type='default'` default `filter`<br> when `type='keyword'` default `search` | `string | STIcon` | `filter`
 `[multiple]` | Whether multiple filters can be selected | `boolean` | `true`
-`[confirmText]` | Text of the confirm button | `string` | `确认`
-`[clearText]` | Text of the clear button | `string` | `重置`
+`[confirmText]` | Text of the confirm button | `string` | -
+`[clearText]` | Text of the clear button | `string` | -
 `[key]` | Unique key of this column, default is `index` property value | `string` | -
 `[reName]` | Map name | `(list: STColumnFilterMenu[], col: STColumn) => Object` | -
 
@@ -273,7 +281,7 @@ Property | Description | Type | Default
 
 Property | Description | Type | Default
 -------- | ----------- | ---- | -------
-`[text]` | Filter text | `string` | -
+`[text]` | Filter text<br>When `type: 'keyword'` is `placeholder` value | `string` | -
 `[value]` | Filter value | `any` | -
 `[checked]` | Whether checked | `boolean` | -
 `[acl]` | ACL permission (Use `can()` verify) | `ACLCanType` | -
@@ -295,7 +303,7 @@ Property | Description | Type | Default
 `[text]` | Text of button, coexist with icon | `string | (record: STData, btn: STColumnButton) => string` | -
 `[icon]` | Icon of button, coexist with text | `string | STIcon` | -
 `[i18n]` | I18n key of button | `string` | -
-`(deprecated) [format]` | Format value of button text | `(record: STData, btn: STColumnButton) => string` | -
+(deprecated) `[format]` | Format value of button text | `(record: STData, btn: STColumnButton) => string` | -
 `[type]` | Type of button | `none,del,modal,static,drawer,link` | -
 `[click]` | Click callback; <br>**function** when `type=modal` will only fire when `confirmed`<br>**reload** Refresh current page<br>**load** load `1` page | `(record: STData, modal?: any, instance?: STComponent) => void | reload` | -
 `[pop]` | Whether to pop confirm | `string` | -
@@ -305,6 +313,8 @@ Property | Description | Type | Default
 `[children]` | Drop-down menu, only supports level 1| `STColumnButton[]` | -
 `[acl]` | ACL permission (Use `can()` verify) | `ACLCanType` | -
 `[iif]` | Custom conditional expression | `(item: STData, btn: STColumnButton, column: STColumn) => boolean` | `() => true`
+`[iifBehavior]` | Render button mode when the conditional expression `false` value | `hide,disabled` | `hide`
+`[tooltip]` | Button popup tip | `string` | -
 
 ### STColumnButtonModal
 

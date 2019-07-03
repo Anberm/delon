@@ -19,6 +19,16 @@ export interface STWidthMode {
   strictBehavior?: 'wrap' | 'truncate';
 }
 
+export interface STResetColumnsOption {
+  pi?: number;
+  ps?: number;
+  columns?: STColumn[];
+  /**
+   * Whether to trigger a data load, default: `true`
+   */
+  emitReload?: boolean;
+}
+
 export interface STReq {
   /**
    * 分页类型，默认：`page`
@@ -99,7 +109,11 @@ export interface STPage {
    */
   zeroIndexed?: boolean;
   /**
-   * 分页方向，默认：`right`
+   * 指定分页显示的位置，默认：`bottom`
+   */
+  position?: 'top' | 'bottom' | 'both';
+  /**
+   * 指定分页分页方向，默认：`right`
    */
   placement?: 'left' | 'center' | 'right';
   /**
@@ -177,7 +191,7 @@ export interface STColumn {
   /**
    * 列标题
    */
-  title: string;
+  title?: string;
   /**
    * 列标题 i18n
    */
@@ -280,7 +294,9 @@ export interface STColumn {
    * 是否允许导出，默认 `true`
    */
   exported?: boolean;
-  /** 权限，等同 `can()` 参数值 */
+  /**
+   * 权限，等同 [ACLCanType](https://ng-alain.com/acl/getting-started/#ACLCanType) 参数值
+   */
   acl?: any;
   /** 当不存在数据时以默认值替代 */
   default?: string;
@@ -373,9 +389,16 @@ export interface STColumnSort {
 
 export interface STColumnFilter {
   /**
-   * 表头的筛选菜单项，至少一项才会生效
+   * 搜索方式
+   * - `defualt` 默认形式
+   * - `keyword` 文本框形式
    */
-  menus: STColumnFilterMenu[];
+  type?: 'default' | 'keyword';
+  /**
+   * 表头的筛选菜单项，至少一项才会生效
+   * - 当 `type='keyword'` 时可为空
+   */
+  menus?: STColumnFilterMenu[];
   /**
    * 本地数据的筛选函数
    */
@@ -385,9 +408,11 @@ export interface STColumnFilter {
    */
   default?: boolean;
   /**
-   * 自定义 filter 图标，默认 `filter`
+   * 自定义 filter 图标
+   * - 当 `type='default'` 默认 `filter`
+   * - 当 `type='keyword'` 默认 `search`
    */
-  icon?: string;
+  icon?: string | STIcon;
   /**
    * 确认按钮文本，默认 `确认`
    */
@@ -416,8 +441,9 @@ export interface STColumnFilter {
 export interface STColumnFilterMenu {
   /**
    * 文本
+   * - 当 `type: 'keyword'` 时表示 `placeholder`
    */
-  text: string;
+  text?: string;
   /**
    * 值
    */
@@ -426,7 +452,9 @@ export interface STColumnFilterMenu {
    * 是否选中
    */
   checked?: boolean;
-  /** 权限，等同 `can()` 参数值 */
+  /**
+   * 权限，等同 [ACLCanType](https://ng-alain.com/acl/getting-started/#ACLCanType) 参数值
+   */
   acl?: any;
 
   [key: string]: any;
@@ -542,16 +570,24 @@ export interface STColumnButton {
    */
   children?: STColumnButton[];
   /**
-   * 权限，等同 `can()` 参数值
+   * 权限，等同 [ACLCanType](https://ng-alain.com/acl/getting-started/#ACLCanType) 参数值
    */
   acl?: any;
   /**
-   * 条件表达式，较高调用频率，请勿过多复杂计算免得产生性能问题
+   * Conditional expression
    */
   iif?: (item: STData, btn: STColumnButton, column: STColumn) => boolean;
+  /**
+   * Conditional expression rendering behavior, can be set to `hide` (default) or `disabled`
+   */
+  iifBehavior?: IifBehaviorType;
+
+  tooltip?: string;
 
   [key: string]: any;
 }
+
+export type IifBehaviorType = 'hide' | 'disabled';
 
 export interface STColumnButtonModal extends ModalHelperOptions {
   /**

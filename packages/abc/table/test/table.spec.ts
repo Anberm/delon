@@ -260,7 +260,7 @@ describe('abc: table', () => {
             });
           });
           it('should be navigate url when click is string value', done => {
-            const router = injector.get(Router);
+            const router = injector.get<Router>(Router);
             spyOn(router, 'navigateByUrl');
             context.data = [{ link: '/a' }];
             page
@@ -497,7 +497,7 @@ describe('abc: table', () => {
             },
           ];
           page.newColumn(columns).then(() => {
-            page.expectCell('del', 1, 1, 'nz-popconfirm');
+            page.expectCell('del', 1, 1, '[nz-popconfirm]');
             // mock trigger
             comp._btnClick(comp._data[0], comp._columns[0].buttons![0]);
             expect(columns[0].buttons![1].click).not.toHaveBeenCalled();
@@ -624,7 +624,7 @@ describe('abc: table', () => {
                   ],
                 },
               ];
-              const modalHelp = injector.get(ModalHelper);
+              const modalHelp = injector.get<ModalHelper>(ModalHelper);
               const mock$ = new Subject();
               spyOn(modalHelp, 'create').and.callFake(() => mock$);
               page.newColumn(columns).then(() => {
@@ -655,7 +655,7 @@ describe('abc: table', () => {
                   ],
                 },
               ];
-              const modalHelp = injector.get(ModalHelper);
+              const modalHelp = injector.get<ModalHelper>(ModalHelper);
               const mock$ = new Subject();
               spyOn(modalHelp, 'createStatic').and.callFake(() => mock$);
               page.newColumn(columns).then(() => {
@@ -688,7 +688,7 @@ describe('abc: table', () => {
                   ],
                 },
               ];
-              const drawerHelp = injector.get(DrawerHelper);
+              const drawerHelp = injector.get<DrawerHelper>(DrawerHelper);
               const mock$ = new Subject();
               spyOn(drawerHelp, 'create').and.callFake(() => mock$);
               page.newColumn(columns).then(() => {
@@ -711,7 +711,7 @@ describe('abc: table', () => {
                   buttons: [{ text: 'a', type: 'link', click: () => null }],
                 },
               ];
-              const router = injector.get(Router);
+              const router = injector.get<Router>(Router);
               spyOn(router, 'navigateByUrl');
               page.newColumn(columns).then(() => {
                 expect(router.navigateByUrl).not.toHaveBeenCalled();
@@ -727,7 +727,7 @@ describe('abc: table', () => {
                   buttons: [{ text: 'a', type: 'link', click: () => '/a' }],
                 },
               ];
-              const router = injector.get(Router);
+              const router = injector.get<Router>(Router);
               spyOn(router, 'navigateByUrl');
               page.newColumn(columns).then(() => {
                 expect(router.navigateByUrl).not.toHaveBeenCalled();
@@ -743,11 +743,12 @@ describe('abc: table', () => {
                   buttons: [{ text: 'a', type: 'link', click: () => '/a' }],
                 },
               ];
-              const router = injector.get(Router);
+              const router = injector.get<Router>(Router);
               const spy = spyOn(router, 'navigateByUrl');
               page.newColumn(columns).then(() => {
                 page.clickCell('a');
-                expect(spy.calls.mostRecent().args[1].state.pi).toBe(1);
+                const arg = spy.calls.mostRecent().args[1] as any;
+                expect(arg.state.pi).toBe(1);
                 done();
               });
             });
@@ -788,7 +789,7 @@ describe('abc: table', () => {
     describe('[data source]', () => {
       let httpBed: HttpTestingController;
       beforeEach(() => {
-        httpBed = injector.get(HttpTestingController);
+        httpBed = injector.get(HttpTestingController as Type<HttpTestingController>);
       });
       it('support null data', done => {
         context.data = null;
@@ -809,7 +810,7 @@ describe('abc: table', () => {
       it('should only restore data', () => {
         // tslint:disable-next-line:no-string-literal
         const dataSource: STDataSource = comp['dataSource'];
-        spyOn(dataSource, 'process').and.callFake(() => Promise.resolve({}));
+        spyOn(dataSource, 'process').and.callFake(() => Promise.resolve({} as any));
         fixture.detectChanges();
         expect(comp.ps).toBe(PS);
       });
@@ -911,13 +912,16 @@ describe('abc: table', () => {
         fixture.whenStable().then(() => {
           page.go(2);
           let load = 0;
-          spyOn(context.comp as any, '_load').and.callFake(() => ++load);
+          spyOn(context.comp as any, 'loadData').and.callFake(() => {
+            ++load;
+            return Promise.resolve({});
+          });
           const pc = dl.query(By.directive(NzPaginationComponent)).injector.get<NzPaginationComponent>(NzPaginationComponent);
           expect(load).toBe(0);
           pc.onPageSizeChange(10);
           fixture.detectChanges();
           expect(load).toBe(1);
-          done();
+          setTimeout(done);
         });
       });
     });
@@ -1175,8 +1179,8 @@ describe('abc: table', () => {
           fixture.detectChanges();
           firstCol = comp._columns[0];
           filter = firstCol.filter as STColumnFilter;
-          comp._filterRadio(firstCol, filter.menus[0], true);
-          comp._filterRadio(firstCol, filter.menus[1], true);
+          comp._filterRadio(firstCol, filter.menus![0], true);
+          comp._filterRadio(firstCol, filter.menus![1], true);
           comp._filterConfirm(firstCol);
           fixture.detectChanges();
           fixture.whenStable().then(() => {
@@ -1190,17 +1194,17 @@ describe('abc: table', () => {
             fixture.detectChanges();
             firstCol = comp._columns[0];
             filter = firstCol.filter as STColumnFilter;
-            comp._filterRadio(firstCol, filter.menus[0], true);
-            comp._filterRadio(firstCol, filter.menus[1], true);
+            comp._filterRadio(firstCol, filter.menus![0], true);
+            comp._filterRadio(firstCol, filter.menus![1], true);
             comp._filterConfirm(firstCol);
           });
           it('should be filter', () => {
-            const res = filter.menus.filter(w => w.checked);
+            const res = filter.menus!.filter(w => w.checked);
             expect(res.length).toBe(1);
           });
           it('should be clean', () => {
             comp.clearFilter();
-            const res = filter.menus.filter(w => w.checked);
+            const res = filter.menus!.filter(w => w.checked);
             expect(res.length).toBe(0);
           });
         });
@@ -1210,19 +1214,42 @@ describe('abc: table', () => {
             fixture.detectChanges();
             firstCol = comp._columns[0];
             filter = firstCol.filter as STColumnFilter;
-            filter.menus[0].checked = true;
-            filter.menus[1].checked = true;
+            filter.menus![0].checked = true;
+            filter.menus![1].checked = true;
             comp._filterConfirm(firstCol);
           });
           it('should be filter', () => {
-            const res = filter.menus.filter(w => w.checked);
+            const res = filter.menus!.filter(w => w.checked);
             expect(res.length).toBe(2);
           });
           it('should be clean', () => {
             comp._filterClear(firstCol);
-            const res = filter.menus.filter(w => w.checked);
+            const res = filter.menus!.filter(w => w.checked);
             expect(res.length).toBe(0);
           });
+        });
+        describe('when type is keyword', () => {
+          beforeEach(() => {
+            context.columns[0].filter!.type = 'keyword';
+            context.columns[0].filter!.default = true;
+            context.columns[0].filter!.menus![0].value = 'a';
+            fixture.detectChanges();
+            firstCol = comp._columns[0];
+            filter = firstCol.filter!;
+          });
+          it('should be filter', fakeAsync(() => {
+            expect(context.change).not.toHaveBeenCalled();
+            comp._filterConfirm(firstCol);
+            expect(context.change).toHaveBeenCalled();
+            discardPeriodicTasks();
+          }));
+          it('should be clean', fakeAsync(() => {
+            const m = filter.menus![0];
+            expect(m.value).toBe('a');
+            context.comp.clearFilter();
+            expect(m.value).toBe(undefined);
+            discardPeriodicTasks();
+          }));
         });
       });
     });
@@ -1489,15 +1516,71 @@ describe('abc: table', () => {
           expect(comp.clearCheck).toHaveBeenCalled();
         });
       });
-      it('#resetColumns', done => {
-        let res = true;
-        const cls = '.st__body tr[data-index="0"] td';
-        page.newColumn([{ title: '', index: 'name', iif: () => res }]).then(() => {
-          page.expectElCount(cls, 1);
-          res = false;
-          comp.resetColumns();
-          fixture.detectChanges();
-          page.expectElCount(cls, 0);
+      describe('#resetColumns', () => {
+        it('should working', done => {
+          let res = true;
+          const cls = '.st__body tr[data-index="0"] td';
+          page.newColumn([{ title: '', index: 'name', iif: () => res }]).then(() => {
+            page.expectElCount(cls, 1);
+            res = false;
+            comp.resetColumns();
+            fixture.detectChanges();
+            page.expectElCount(cls, 0);
+            done();
+          });
+        });
+        it('should be specify new columns', done => {
+          page.newColumn([{ title: '1', index: 'name' }]).then(() => {
+            page.expectHead('1', 'name');
+            comp.resetColumns({ columns: [{ title: '2', index: 'name' }] });
+            fixture.detectChanges();
+            page.expectHead('2', 'name');
+            done();
+          });
+        });
+        it('should be specify new pi', done => {
+          page.newColumn([{ title: '1', index: 'name' }]).then(() => {
+            expect(comp.pi).toBe(1);
+            comp.resetColumns({ pi: 2 });
+            expect(comp.pi).toBe(2);
+            done();
+          });
+        });
+        it('should be specify new ps', done => {
+          page.newColumn([{ title: '1', index: 'name' }]).then(() => {
+            expect(comp.ps).toBe(PS);
+            comp.resetColumns({ ps: 2 });
+            expect(comp.ps).toBe(2);
+            done();
+          });
+        });
+        it('should be ingore data reload', done => {
+          page.newColumn([{ title: '1', index: 'name' }]).then(() => {
+            expect(comp.ps).toBe(PS);
+            const compAny = comp as any;
+            spyOn(compAny, 'loadPageData');
+            comp.resetColumns({ emitReload: false });
+            expect(compAny.loadPageData).not.toHaveBeenCalled();
+            done();
+          });
+        });
+      });
+      it('#filteredData', done => {
+        fixture.detectChanges();
+        fixture.whenStable().then(() => {
+          expect((comp.data as any[]).length).toBe(DEFAULTCOUNT);
+          expect(comp._data.length).toBe(PS);
+          comp.filteredData.then(list => {
+            expect(list.length).toBe(DEFAULTCOUNT);
+            done();
+          });
+        });
+      });
+      it('#cdkVirtualScrollViewport', done => {
+        context.virtualScroll = true;
+        fixture.detectChanges();
+        fixture.whenStable().then(() => {
+          expect(context.comp.cdkVirtualScrollViewport != null).toBe(true);
           done();
         });
       });
@@ -1518,6 +1601,15 @@ describe('abc: table', () => {
           comp.export();
           expect(exportSrv.export).toHaveBeenCalled();
         });
+        it('when data is true', fakeAsync(() => {
+          context.data = genData(1);
+          fixture.detectChanges();
+          spyOnProperty(comp, 'filteredData', 'get').and.returnValue(Promise.resolve([]));
+          expect(exportSrv.export).not.toHaveBeenCalled();
+          comp.export(true);
+          tick();
+          expect(exportSrv.export).toHaveBeenCalled();
+        }));
         it('when data is observable data', () => {
           context.data = of(genData(1));
           fixture.detectChanges();
@@ -1608,6 +1700,49 @@ describe('abc: table', () => {
           });
       });
     });
+    describe('#button', () => {
+      describe('#iifBehavior', () => {
+        it('with hide', done => {
+          page
+            .newColumn([
+              {
+                title: '',
+                buttons: [{ text: 'a', click: () => 'load', iif: () => false, iifBehavior: 'hide' }],
+              },
+            ])
+            .then(() => {
+              page.expectElCount('.st__body tr td a', 0);
+              done();
+            });
+        });
+        it('with disabled', done => {
+          page
+            .newColumn([
+              {
+                title: '',
+                buttons: [{ text: 'a', click: () => 'load', iif: () => false, iifBehavior: 'disabled' }],
+              },
+            ])
+            .then(() => {
+              page.expectElCount('.st__btn-disabled', PS);
+              done();
+            });
+        });
+      });
+      it('#tooltip', done => {
+        page
+          .newColumn([
+            {
+              title: '',
+              buttons: [{ text: 'a', click: () => 'load', tooltip: 't' }],
+            },
+          ])
+          .then(() => {
+            page.expectElCount('.st__body [nz-tooltip]', PS);
+            done();
+          });
+      });
+    });
   });
 
   describe('**slow**', () => {
@@ -1684,7 +1819,7 @@ describe('abc: table', () => {
         page.newColumn([{ title: '', i18n: curLang, index: 'id' }]).then(() => {
           const el = page.getEl('.ant-pagination-total-text');
           expect(el.textContent!.trim()).toContain(`共`);
-          injector.get(DelonLocaleService).setLocale(en_US);
+          injector.get<DelonLocaleService>(DelonLocaleService).setLocale(en_US);
           fixture.detectChanges();
           expect(el.textContent!.trim()).toContain(`of`);
           done();
@@ -1706,9 +1841,10 @@ describe('abc: table', () => {
 
   class PageObject {
     _changeData: STChange;
+    changeSpy: jasmine.Spy;
     constructor() {
       spyOn(context, 'error');
-      spyOn(context, 'change').and.callFake(e => (this._changeData = e));
+      this.changeSpy = spyOn(context, 'change').and.callFake((e => (this._changeData = e)) as any);
       comp = context.comp;
     }
     get(cls: string): DebugElement {
@@ -1880,6 +2016,7 @@ describe('abc: table', () => {
       [widthMode]="widthMode"
       [loading]="loading"
       [loadingDelay]="loadingDelay"
+      [virtualScroll]="virtualScroll"
       [bordered]="bordered"
       [size]="size"
       [scroll]="scroll"
@@ -1894,7 +2031,7 @@ describe('abc: table', () => {
   `,
 })
 class TestComponent {
-  @ViewChild('st')
+  @ViewChild('st', { static: true })
   comp: STComponent;
   data: string | any[] | Observable<any[]> | null = deepCopy(USERS);
   res: STRes = {};
@@ -1918,6 +2055,7 @@ class TestComponent {
   expandRowByClick = false;
   expandAccordion = false;
   widthMode: STWidthMode = {};
+  virtualScroll = false;
 
   error() {}
   change() {}

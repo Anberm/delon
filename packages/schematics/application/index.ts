@@ -21,14 +21,7 @@ import { tryAddFile } from '../utils/alain';
 import { HMR_CONTENT } from '../utils/contents';
 import { addFiles } from '../utils/file';
 import { addHeadStyle, addHtmlToBody } from '../utils/html';
-import {
-  addPackageToPackageJson,
-  getJSON,
-  getPackage,
-  overwriteJSON,
-  overwritePackage,
-  scriptsToAngularJson,
-} from '../utils/json';
+import { addPackageToPackageJson, getJSON, getPackage, overwriteJSON, overwritePackage, scriptsToAngularJson } from '../utils/json';
 import { VERSION, ZORROVERSION } from '../utils/lib-versions';
 import { getProject, Project } from '../utils/project';
 import { Schema as ApplicationOptions } from './schema';
@@ -41,6 +34,7 @@ function removeOrginalFiles() {
   return (host: Tree) => {
     [
       `${project.root}/README.md`,
+      `${project.root}/tslint.json`,
       `${project.sourceRoot}/main.ts`,
       `${project.sourceRoot}/environments/environment.prod.ts`,
       `${project.sourceRoot}/environments/environment.ts`,
@@ -88,16 +82,14 @@ function addDependenciesToPackageJson(options: ApplicationOptions) {
         `ng-alain-codelyzer@DEP-0.0.0-PLACEHOLDER`,
         `@delon/testing@${VERSION}`,
         // color-less
+        `antd-theme-generator@DEP-0.0.0-PLACEHOLDER`,
         `less-bundle-promise@DEP-0.0.0-PLACEHOLDER`,
       ],
       'devDependencies',
     );
     // i18n
     if (options.i18n) {
-      addPackageToPackageJson(host, [
-        `@ngx-translate/core@DEP-0.0.0-PLACEHOLDER`,
-        `@ngx-translate/http-loader@DEP-0.0.0-PLACEHOLDER`,
-      ]);
+      addPackageToPackageJson(host, [`@ngx-translate/core@DEP-0.0.0-PLACEHOLDER`, `@ngx-translate/http-loader@DEP-0.0.0-PLACEHOLDER`]);
     }
     return host;
   };
@@ -107,9 +99,9 @@ function addRunScriptToPackageJson() {
   return (host: Tree) => {
     const json = getPackage(host, 'scripts');
     if (json == null) return host;
-    json.scripts.start = `npm run color-less && ng serve -o`;
-    json.scripts.build = `npm run color-less && ng build --prod --build-optimizer`;
-    json.scripts.analyze = `npm run color-less && ng build --prod --build-optimizer --stats-json`;
+    json.scripts.start = `npm run color-less && ng s -o`;
+    json.scripts.build = `npm run color-less && node --max_old_space_size=5120 ./node_modules/@angular/cli/bin/ng build --prod`;
+    json.scripts.analyze = `npm run color-less && node --max_old_space_size=5120 ./node_modules/@angular/cli/bin/ng build --prod --stats-json`;
     json.scripts['test-coverage'] = `ng test --code-coverage --watch=false`;
     json.scripts['color-less'] = `node scripts/color-less.js`;
     json.scripts.icon = `ng g ng-alain:plugin icon`;
@@ -120,33 +112,17 @@ function addRunScriptToPackageJson() {
 
 function addPathsToTsConfig() {
   return (host: Tree) => {
-    [
-      {
-        path: 'tsconfig.json',
-        baseUrl: `${project.sourceRoot}/`,
-      },
-      {
-        path: `${project.sourceRoot}/tsconfig.app.json`,
-        baseUrl: './',
-      },
-      {
-        path: `${project.sourceRoot}/tsconfig.spec.json`,
-        baseUrl: './',
-      },
-    ].forEach(item => {
-      const json = getJSON(host, item.path, 'compilerOptions');
-      if (json == null) return host;
-      if (!json.compilerOptions) json.compilerOptions = {};
-      if (!json.compilerOptions.paths) json.compilerOptions.paths = {};
-      json.compilerOptions.baseUrl = item.baseUrl;
-      const paths = json.compilerOptions.paths;
-      paths['@shared'] = ['app/shared/index'];
-      paths['@shared/*'] = ['app/shared/*'];
-      paths['@core'] = ['app/core/index'];
-      paths['@core/*'] = ['app/core/*'];
-      paths['@env/*'] = ['environments/*'];
-      overwriteJSON(host, item.path, json);
-    });
+    const json = getJSON(host, 'tsconfig.json', 'compilerOptions');
+    if (json == null) return host;
+    if (!json.compilerOptions) json.compilerOptions = {};
+    if (!json.compilerOptions.paths) json.compilerOptions.paths = {};
+    const paths = json.compilerOptions.paths;
+    paths['@shared'] = ['src/app/shared/index'];
+    paths['@shared/*'] = ['src/app/shared/*'];
+    paths['@core'] = ['src/app/core/index'];
+    paths['@core/*'] = ['src/app/core/*'];
+    paths['@env/*'] = ['src/environments/*'];
+    overwriteJSON(host, 'tsconfig.json', json);
     return host;
   };
 }
@@ -156,64 +132,33 @@ function addCodeStylesToPackageJson() {
     const json = getPackage(host);
     if (json == null) return host;
     json.scripts.lint = `npm run lint:ts && npm run lint:style`;
-    json.scripts['lint:ts'] = `tslint -p src/tsconfig.app.json -c tslint.json 'src/**/*.ts'`;
-    json.scripts['lint:style'] = `stylelint 'src/**/*.less' --syntax less`;
+    json.scripts['lint:ts'] = `tslint -p tsconfig.app.json -c tslint.json \"src/**/*.ts\" --fix`;
+    json.scripts['lint:style'] = `stylelint \"src/**/*.less\" --syntax less --fix`;
     json.scripts['lint-staged'] = `lint-staged`;
     json.scripts['tslint-check'] = `tslint-config-prettier-check ./tslint.json`;
     json['lint-staged'] = {
-      '*.{cmd,html,json,md,sh,txt,xml,yml}': ['editorconfig-tools fix', 'git add'],
-      '*.ts': ['npm run lint:ts', 'prettier --write', 'git add'],
-      '*.less': ['npm run lint:style', 'prettier --write', 'git add'],
+      linters: {
+        '*.ts': ['npm run lint:ts', 'git add'],
+        '*.less': ['npm run lint:style', 'git add'],
+      },
       ignore: ['src/assets/*'],
     };
     overwritePackage(host, json);
-    // tslint
-    const tsLint = getJSON(host, 'tslint.json', 'rules');
-    tsLint.rules.curly = false;
-    tsLint.rules['use-host-property-decorator'] = false;
-    tsLint.rules['directive-selector'] = [
-      true,
-      'attribute',
-      [project.prefix, 'passport', 'exception', 'layout', 'header'],
-      'camelCase',
-    ];
-    tsLint.rules['component-selector'] = [
-      true,
-      'element',
-      [project.prefix, 'passport', 'exception', 'layout', 'header'],
-      'kebab-case',
-    ];
-    overwriteJSON(host, 'tslint.json', tsLint);
-    // app tslint
-    const sourceTslint = `${project.sourceRoot}/tslint.json`;
-    if (host.exists(sourceTslint)) {
-      const appTsLint = getJSON(host, sourceTslint, 'rules');
-      appTsLint.rules['directive-selector'] = [
-        true,
-        'attribute',
-        [project.prefix, 'passport', 'exception', 'layout', 'header'],
-        'camelCase',
-      ];
-      appTsLint.rules['component-selector'] = [
-        true,
-        'element',
-        [project.prefix, 'passport', 'exception', 'layout', 'header'],
-        'kebab-case',
-      ];
-      overwriteJSON(host, sourceTslint, appTsLint);
-    }
     // dependencies
-    addPackageToPackageJson(host, [
-      `tslint-config-prettier@DEP-0.0.0-PLACEHOLDER`,
-      `tslint-language-service@DEP-0.0.0-PLACEHOLDER`,
-      `editorconfig-tools@DEP-0.0.0-PLACEHOLDER`,
-      `lint-staged@DEP-0.0.0-PLACEHOLDER`,
-      `husky@DEP-0.0.0-PLACEHOLDER`,
-      `prettier@DEP-0.0.0-PLACEHOLDER`,
-      `prettier-stylelint@DEP-0.0.0-PLACEHOLDER`,
-      `stylelint@DEP-0.0.0-PLACEHOLDER`,
-      `stylelint-config-standard@DEP-0.0.0-PLACEHOLDER`,
-    ]);
+    addPackageToPackageJson(
+      host,
+      [
+        `tslint-config-prettier@DEP-0.0.0-PLACEHOLDER`,
+        `tslint-language-service@DEP-0.0.0-PLACEHOLDER`,
+        `lint-staged@DEP-0.0.0-PLACEHOLDER`,
+        `husky@DEP-0.0.0-PLACEHOLDER`,
+        `prettier@DEP-0.0.0-PLACEHOLDER`,
+        `prettier-stylelint@DEP-0.0.0-PLACEHOLDER`,
+        `stylelint@DEP-0.0.0-PLACEHOLDER`,
+        `stylelint-config-standard@DEP-0.0.0-PLACEHOLDER`,
+      ],
+      'devDependencies',
+    );
     return host;
   };
 }
@@ -280,11 +225,7 @@ function addStyle() {
       `  <div class="preloader"><div class="cs-loader"><div class="cs-loader-inner"><label>	●</label><label>	●</label><label>	●</label><label>	●</label><label>	●</label><label>	●</label></div></div>\n`,
     );
     // add styles
-    addFiles(
-      host,
-      [`${project.sourceRoot}/styles/index.less`, `${project.sourceRoot}/styles/theme.less`],
-      overwriteDataFileRoot,
-    );
+    addFiles(host, [`${project.sourceRoot}/styles/index.less`, `${project.sourceRoot}/styles/theme.less`], overwriteDataFileRoot);
 
     return host;
   };
@@ -427,8 +368,8 @@ function fixLangInHtml(host: Tree, p: string, langs: {}) {
     ++matchCount;
     return `{{ status ? '${langs[key1] || key1}' : '${langs[key2] || key2}' }}`;
   });
-  // {{ 'app.register-result.msg' | translate:params }}
-  html = html.replace(/\{\{[ ]?'([^']+)'[ ]? \| translate:[^ ]+ \}\}/g, (_word, key) => {
+  // {{ 'app.register-result.msg' | translate: params }}
+  html = html.replace(/\{\{[ ]?'([^']+)'[ ]? \| translate: [^ ]+ \}\}/g, (_word, key) => {
     ++matchCount;
     return langs[key] || key;
   });
@@ -473,8 +414,6 @@ function fixVsCode() {
 
 function installPackages() {
   return (_host: Tree, context: SchematicContext) => {
-    console.log(`Start installing dependencies, please wait...`);
-
     context.addTask(new NodePackageInstallTask());
   };
 }

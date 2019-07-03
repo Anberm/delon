@@ -10,6 +10,7 @@ import {
   STRowClassName,
   STSingleSort,
   STWidthMode,
+  IifBehaviorType,
 } from './table.interfaces';
 
 @Injectable({ providedIn: 'root' })
@@ -53,6 +54,7 @@ export class STConfig {
   page?: STPage = {
     front: true,
     zeroIndexed: false,
+    position: 'bottom',
     placement: 'right',
     show: true,
     showSize: false,
@@ -103,13 +105,13 @@ export class STConfig {
    */
   rowClickTime?: number = 200;
   /**
-   * 过滤按钮确认文本，默认：`确认`
+   * 过滤按钮确认文本
    */
-  filterConfirmText?: string = '确认';
+  filterConfirmText?: string;
   /**
-   * 过滤按钮重置文本，默认：`重置`
+   * 过滤按钮重置文本
    */
-  filterClearText?: string = '重置';
+  filterClearText?: string;
   /**
    * 按钮图标
    */
@@ -142,4 +144,12 @@ export class STConfig {
     type: 'default',
     strictBehavior: 'truncate',
   };
+  virtualItemSize? = 54;
+  virtualMaxBufferPx? = 200;
+  virtualMinBufferPx? = 100;
+
+  /**
+   * Conditional expression rendering behavior, can be set to `hide` (default) or `disabled`
+   */
+  iifBehavior?: IifBehaviorType = 'hide';
 }

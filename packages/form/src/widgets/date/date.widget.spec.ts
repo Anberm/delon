@@ -1,6 +1,10 @@
 import { DebugElement } from '@angular/core';
-import { ComponentFixture } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync } from '@angular/core/testing';
 import format from 'date-fns/format';
+import { deepCopy } from '@delon/util';
+import { registerLocaleData } from '@angular/common';
+import zh from '@angular/common/locales/zh';
+registerLocaleData(zh);
 
 import { createTestContext } from '@delon/testing';
 import { configureSFTestSuite, SFPage, TestFormComponent } from '../../../spec/base.spec';
@@ -58,16 +62,19 @@ describe('form: widget: date', () => {
         expect(format(comp.value)).toBe(format(time));
       });
     });
-    it('should be set value', () => {
+    it('should be set value', fakeAsync(() => {
       const s: SFSchema = {
         properties: { a: { type: 'string', format: 'date-time', ui: { widget } } },
       };
       page
         .newSchema(s)
         .checkValue('a', null)
-        .setValue('a', new Date());
+        .setValue('a', new Date(2019, 0, 1))
+        .dc(1);
       expect(page.getValue('a') instanceof Date).toBe(true);
-    });
+      const ipt = page.getEl('.ant-calendar-picker-input') as HTMLInputElement;
+      expect(ipt.value).toContain(`2019-01-01`);
+    }));
   });
 
   describe('#mode', () => {
@@ -90,6 +97,14 @@ describe('form: widget: date', () => {
     });
 
     describe('when not specify displayFormat', () => {
+      it('should display yyyy with year mode ', () => {
+        const s: SFSchema = {
+          properties: { a: { type: 'string', ui: { widget, mode: 'year' } } },
+        };
+        page.newSchema(s);
+        const comp = getComp();
+        expect(comp.displayFormat).toBe('yyyy');
+      });
       it('should display yyyy-MM with month mode ', () => {
         const s: SFSchema = {
           properties: { a: { type: 'string', ui: { widget, mode: 'month' } } },
@@ -150,7 +165,7 @@ describe('form: widget: date', () => {
       },
     };
     it('should working', () => {
-      page.newSchema(s);
+      page.newSchema(deepCopy(s));
       const comp = getComp();
       expect(comp.mode).toBe('range');
       const time = new Date();
@@ -160,7 +175,7 @@ describe('form: widget: date', () => {
       page.checkValue('/start', '').checkValue('/end', '');
     });
     it('should be default', () => {
-      const copyS = { ...s };
+      const copyS = deepCopy(s);
       const time = new Date();
       copyS.properties!.start.default = time;
       copyS.properties!.end.default = time;
@@ -170,7 +185,7 @@ describe('form: widget: date', () => {
       expect(res![0]).toBe(time);
     });
     it('should be removed ui.end when not found end path', () => {
-      const copyS = { ...s };
+      const copyS = deepCopy(s);
       (copyS.properties!.start.ui as SFUISchemaItem).end = 'invalid-end';
       page.newSchema(copyS).checkUI('/start', 'end', null);
     });
