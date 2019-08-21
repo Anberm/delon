@@ -21,9 +21,18 @@ import { tryAddFile } from '../utils/alain';
 import { HMR_CONTENT } from '../utils/contents';
 import { addFiles } from '../utils/file';
 import { addHeadStyle, addHtmlToBody } from '../utils/html';
-import { addPackageToPackageJson, getJSON, getPackage, overwriteJSON, overwritePackage, scriptsToAngularJson } from '../utils/json';
+import {
+  addPackageToPackageJson,
+  getJSON,
+  getPackage,
+  overwriteJSON,
+  overwritePackage,
+  scriptsToAngularJson,
+  getAngular,
+  overwriteAngular,
+} from '../utils/json';
 import { VERSION, ZORROVERSION } from '../utils/lib-versions';
-import { getProject, Project } from '../utils/project';
+import { getProject, Project, getProjectFromWorkspace } from '../utils/project';
 import { Schema as ApplicationOptions } from './schema';
 
 const overwriteDataFileRoot = path.join(__dirname, 'overwrites');
@@ -54,6 +63,19 @@ function fixMain() {
   return (host: Tree) => {
     // fix: main.ts using no hmr file
     tryAddFile(host, `${project.sourceRoot}/main.ts`, HMR_CONTENT.NO_HMR_MAIN_DOT_TS);
+  };
+}
+
+function fixAngularJson(options: ApplicationOptions) {
+  return (host: Tree) => {
+    const json = getAngular(host);
+    const _project = getProjectFromWorkspace(json, options.project);
+
+    // Add proxy.conf.json
+    (_project.targets || _project.architect)!.serve!.options.proxyConfig = 'proxy.conf.json';
+
+    overwriteAngular(host, json);
+    return host;
   };
 }
 
@@ -132,14 +154,14 @@ function addCodeStylesToPackageJson() {
     const json = getPackage(host);
     if (json == null) return host;
     json.scripts.lint = `npm run lint:ts && npm run lint:style`;
-    json.scripts['lint:ts'] = `tslint -p tsconfig.app.json -c tslint.json \"src/**/*.ts\" --fix`;
+    json.scripts['lint:ts'] = `tslint -c tslint.json \"src/**/*.ts\" --fix`;
     json.scripts['lint:style'] = `stylelint \"src/**/*.less\" --syntax less --fix`;
     json.scripts['lint-staged'] = `lint-staged`;
     json.scripts['tslint-check'] = `tslint-config-prettier-check ./tslint.json`;
     json['lint-staged'] = {
       linters: {
-        '*.ts': ['npm run lint:ts', 'git add'],
-        '*.less': ['npm run lint:style', 'git add'],
+        'src/**/*.ts': ['npm run lint:ts', 'git add'],
+        'src/**/*.less': ['npm run lint:style', 'git add'],
       },
       ignore: ['src/assets/*'],
     };
@@ -155,7 +177,11 @@ function addCodeStylesToPackageJson() {
         `prettier@DEP-0.0.0-PLACEHOLDER`,
         `prettier-stylelint@DEP-0.0.0-PLACEHOLDER`,
         `stylelint@DEP-0.0.0-PLACEHOLDER`,
+        `stylelint-config-prettier@DEP-0.0.0-PLACEHOLDER`,
+        `stylelint-config-rational-order@DEP-0.0.0-PLACEHOLDER`,
         `stylelint-config-standard@DEP-0.0.0-PLACEHOLDER`,
+        `stylelint-declaration-block-no-ignored-properties@DEP-0.0.0-PLACEHOLDER`,
+        `stylelint-order@DEP-0.0.0-PLACEHOLDER`,
       ],
       'devDependencies',
     );
@@ -440,6 +466,7 @@ export default function(options: ApplicationOptions): Rule {
       addStyle(),
       fixLang(options),
       fixVsCode(),
+      fixAngularJson(options),
       installPackages(),
     ])(host, context);
   };

@@ -31,6 +31,7 @@ import {
   STRes,
   STResReNameType,
   STWidthMode,
+  STColumnTitle,
 } from '../table.interfaces';
 import { STModule } from '../table.module';
 
@@ -138,6 +139,21 @@ describe('abc: table', () => {
     configureTestSuite(() => genModule({ createComp: false }));
     beforeEach(() => createComp(true, TestComponent));
     describe('#columns', () => {
+      describe('[title]', () => {
+        it('with STColumnTitle type', done => {
+          page.newColumn([{ title: { text: 'a' }, index: 'id' }]).then(() => {
+            page.expectHead('a', 'id', '.ant-table-column-title');
+            done();
+          });
+        });
+        it('should be render optional', done => {
+          page.newColumn([{ title: { text: 'a', optional: 'b', optionalHelp: 'help' }, index: 'id' }]).then(() => {
+            page.expectHead('b', 'id', '.st__head-optional');
+            expect(page.getHead('id').querySelector('.st__head-tip') != null).toBe(true);
+            done();
+          });
+        });
+      });
       describe('[type]', () => {
         describe(`with checkbox`, () => {
           it(`should be render checkbox`, done => {
@@ -810,7 +826,7 @@ describe('abc: table', () => {
       it('should only restore data', () => {
         // tslint:disable-next-line:no-string-literal
         const dataSource: STDataSource = comp['dataSource'];
-        spyOn(dataSource, 'process').and.callFake(() => Promise.resolve({} as any));
+        spyOn(dataSource, 'process').and.callFake(() => of({} as any));
         fixture.detectChanges();
         expect(comp.ps).toBe(PS);
       });
@@ -827,8 +843,8 @@ describe('abc: table', () => {
           done();
         });
       });
-      describe('HTTP Status', () => {
-        it('error request', done => {
+      describe('Http Request', () => {
+        it('when error request', done => {
           context.data = '/mock';
           fixture.detectChanges();
           httpBed.expectOne(() => true).error(new ErrorEvent('cancel'));
@@ -837,7 +853,7 @@ describe('abc: table', () => {
             done();
           });
         });
-        it('0', done => {
+        it('when http status: 0', done => {
           context.data = '/mock';
           fixture.detectChanges();
           httpBed.expectOne(() => true).flush(null, { status: 0, statusText: '' });
@@ -846,7 +862,7 @@ describe('abc: table', () => {
             done();
           });
         });
-        it('404', done => {
+        it('when http status: 404', done => {
           context.data = '/mock';
           fixture.detectChanges();
           httpBed.expectOne(() => true).flush(null, { status: 404, statusText: 'Not found' });
@@ -855,12 +871,22 @@ describe('abc: table', () => {
             done();
           });
         });
-        it('403', done => {
+        it('when http status: 403', done => {
           context.data = '/mock';
           fixture.detectChanges();
           httpBed.expectOne(() => true).flush(null, { status: 403, statusText: 'Forbidden' });
           fixture.whenStable().then(() => {
             expect(comp._data.length).toBe(0);
+            done();
+          });
+        });
+        it('should be ingore catch error when component is destroyed', done => {
+          expect(context.error).not.toHaveBeenCalled();
+          context.data = '/mock';
+          fixture.detectChanges();
+          comp.ngOnDestroy();
+          fixture.whenStable().then(() => {
+            expect(context.error).not.toHaveBeenCalled();
             done();
           });
         });
@@ -873,6 +899,13 @@ describe('abc: table', () => {
         expect(comp.req.reName).not.toBeNull();
         expect(comp.req.reName!.pi).toBe('PI');
         expect(comp.req.reName!.ps).toBe('ps');
+      });
+      it('should be ingore request when lazyLoad is true', () => {
+        const anyComp = comp as any;
+        spyOn(anyComp, 'loadPageData');
+        context.req = { lazyLoad: true };
+        fixture.detectChanges();
+        expect(anyComp.loadPageData).not.toHaveBeenCalled();
       });
     });
     describe('#res', () => {
@@ -1678,6 +1711,16 @@ describe('abc: table', () => {
             done();
           });
         });
+        it('should be ingore add text-truncate class when type is img', done => {
+          context.widthMode = { type: 'strict', strictBehavior: 'truncate' };
+          fixture.detectChanges();
+          page.newColumn([{ index: 'img', type: 'img', width: 50 }]).then(() => {
+            page.expectElCount(`.st__width-strict`, 1);
+            page.expectElCount(`.st__width-strict-truncate`, 1);
+            page.expectElCount(`td.text-truncate`, 0);
+            done();
+          });
+        });
       });
     });
     describe('#loading', () => {
@@ -1816,7 +1859,7 @@ describe('abc: table', () => {
         spyOn(i18nSrv, 'fanyi').and.callFake(() => curLang);
       });
       it('should working', done => {
-        page.newColumn([{ title: '', i18n: curLang, index: 'id' }]).then(() => {
+        page.newColumn([{ title: { i18n: curLang }, index: 'id' }]).then(() => {
           const el = page.getEl('.ant-pagination-total-text');
           expect(el.textContent!.trim()).toContain(`共`);
           injector.get<DelonLocaleService>(DelonLocaleService).setLocale(en_US);
@@ -1827,12 +1870,22 @@ describe('abc: table', () => {
       });
       it('should be re-render columns when i18n changed', done => {
         curLang = 'en';
-        page.newColumn([{ title: '', i18n: curLang, index: 'id' }]).then(() => {
+        page.newColumn([{ title: { i18n: curLang }, index: 'id' }]).then(() => {
           page.expectHead(curLang, 'id');
           curLang = 'zh';
           i18nSrv.use(curLang);
           fixture.detectChanges();
           page.expectHead(curLang, 'id');
+          done();
+        });
+      });
+      it('should be compatible', done => {
+        page.newColumn([{ title: '', i18n: curLang, index: 'id' }]).then(() => {
+          const el = page.getEl('.ant-pagination-total-text');
+          expect(el.textContent!.trim()).toContain(`共`);
+          injector.get<DelonLocaleService>(DelonLocaleService).setLocale(en_US);
+          fixture.detectChanges();
+          expect(el.textContent!.trim()).toContain(`of`);
           done();
         });
       });
@@ -1924,7 +1977,7 @@ describe('abc: table', () => {
     }
     /** 断言组件内 `_columns` 值 */
     expectColumn(title: string, path: string, valule: any): this {
-      const ret = deepGet(comp._columns.find(w => w.title === title), path);
+      const ret = deepGet(comp._columns.find(w => (w.title as STColumnTitle).text === title), path);
       expect(ret).toBe(valule);
       return this;
     }

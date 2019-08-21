@@ -100,7 +100,7 @@ NG-ZORRO 暂时没有提供 Cli 工具升级，更多细节请参考 [8.x文档�
 
 ## 3、Delon
 
-手动修改 `package.json` 里的 `@delon/*`、`ng-alain` 依赖包版本号为：`^8.0.0-rc.0`，并执行：
+手动修改 `package.json` 里的 `@delon/*`、`ng-alain` 依赖包版本号为：`^8.0.0`，并执行：
 
 ```bash
 yarn
@@ -130,7 +130,7 @@ NG-ALAIN 始终以 Angular Cli 产生的基础结构为基准，因此对于文�
 3. 修复 `lint:ts` 命令行相应路径
 ```diff
 - "lint:ts": "tslint -p src/tsconfig.app.json -c tslint.json \"src/**/*.ts\" --fix",
-+ "lint:ts": "tslint -p tsconfig.app.json -c tslint.json \"src/**/*.ts\" --fix",
++ "lint:ts": "tslint -c tslint.json \"src/**/*.ts\" --fix",
 ```
 
 ## 命令行

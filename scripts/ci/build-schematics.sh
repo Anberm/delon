@@ -57,10 +57,14 @@ DEPENDENCIES=$(node -p "
     'tslint-language-service',
     'lint-staged',
     'husky',
-    'prettier',
     'prettier-stylelint',
-    'stylelint',
+    'stylelint-config-prettier',
+    'stylelint-config-rational-order',
     'stylelint-config-standard',
+    'stylelint-declaration-block-no-ignored-properties',
+    'stylelint-order',
+    'stylelint',
+    'prettier',
     '@antv/data-set',
     '@antv/g2',
     '@antv/g2-plugin-slider',
@@ -115,6 +119,7 @@ copyFiles() {
     "${1}.prettierrc|${2}application/files/root/__dot__prettierrc"
     "${1}.stylelintrc|${2}application/files/root/__dot__stylelintrc"
     "${1}tslint.json|${2}application/files/root"
+    "${1}proxy.conf.json|${2}application/files/root"
     # cli
     # "${1}_cli-tpl|${2}application/files/root/"
     # ci
@@ -294,11 +299,11 @@ echo "Finished!!"
 # TODO: just only cipchk
 # clear | bash ./scripts/ci/build-schematics.sh -b -t
 # clear | bash ./scripts/ci/build-schematics.sh -b -copy
-# clear | bash ./scripts/ci/build-schematics.sh -b -copy -debug -dev
+# clear | bash ./scripts/ci/build-schematics.sh -b -copy -debug
 if [[ ${DEBUG} == true ]]; then
   cd ../../
   DEBUG_FROM=${PWD}/work/delon/dist/ng-alain/*
-  DEBUG_TO=${PWD}/work/ng7/node_modules/ng-alain/
+  DEBUG_TO=${PWD}/work/ng8/node_modules/ng-alain/
   echo "DEBUG_FROM:${DEBUG_FROM}"
   echo "DEBUG_TO:${DEBUG_TO}"
   rm -rf ${DEBUG_TO}/application

@@ -57,6 +57,10 @@ export interface STReq {
    */
   allInBody?: boolean;
   /**
+   * 是否延迟加载数据，即渲染结束后不会主动发起请求，默认：`false`
+   */
+  lazyLoad?: boolean;
+  /**
    * 请求前数据处理
    */
   process?: (requestOptions: STRequestOptions) => STRequestOptions;
@@ -191,9 +195,10 @@ export interface STColumn {
   /**
    * 列标题
    */
-  title?: string;
+  title?: string | STColumnTitle;
   /**
    * 列标题 i18n
+   * @deprecated 使用 `title: { i18n: 'value' }` 代替
    */
   i18n?: string;
   /**
@@ -261,7 +266,7 @@ export interface STColumn {
   /**
    * 格式化列值
    */
-  format?: (item: STData, col: STColumn) => string;
+  format?: (item: STData, col: STColumn, index: number) => string;
   /**
    * 自定义全/反选选择项
    */
@@ -334,6 +339,28 @@ export interface STColumn {
   statistical?: STStatisticalType | STStatistical;
 
   [key: string]: any;
+}
+
+export interface STColumnTitle {
+  /**
+   * Text of header, can be choose one of `text` or `i18n`
+   */
+  text?: string;
+
+  /**
+   * I18n key of header, can be choose one of `text` or `i18n`
+   */
+  i18n?: string;
+
+  /**
+   * Optional information of header
+   */
+  optional?: string;
+
+  /**
+   * Optional help of header
+   */
+  optionalHelp?: string;
 }
 
 export type STStatisticalType = 'count' | 'distinctCount' | 'sum' | 'average' | 'max' | 'min';
