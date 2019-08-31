@@ -25,11 +25,11 @@ import { STColumn } from '@delon/abc';
   selector: 'app-demo',
   template: `
   <div class="mb-md">
-    <nz-checkbox-group [(ngModel)]="customColumns" (ngModelChange)="st.resetColumns({ emitReload: false })"></nz-checkbox-group>
+    <nz-checkbox-group [(ngModel)]="customColumns" (ngModelChange)="st.resetColumns({ emitReload: true })"></nz-checkbox-group>
   </div>
   <st #st [data]="users" [columns]="columns">
     <ng-template st-row="customTitle" type="title" let-c>
-      {{ c.title }}
+      {{ c.title.text }}
       <span nz-dropdown [nzDropdownMenu]="menuTpl" nzTrigger="click" [nzClickHide]="false" nzPlacement="bottomRight">
         <i nz-icon nzType="down"></i>
       </span>
@@ -41,9 +41,7 @@ import { STColumn } from '@delon/abc';
       </nz-dropdown-menu>
     </ng-template>
     <ng-template st-row="custom" let-item let-index="index">
-      <nz-tooltip [nzTitle]="'年龄：' + item.age">
-        <span nz-tooltip>tooltip: {{item.age}}-{{index}}</span>
-      </nz-tooltip>
+      <span nz-tooltip [nzTooltipTitle]="'年龄：' + item.age">tooltip: {{item.age}}-{{index}}</span>
     </ng-template>
   </st>
   `,
