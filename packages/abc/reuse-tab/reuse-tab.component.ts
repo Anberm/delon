@@ -178,6 +178,8 @@ export class ReuseTabComponent implements OnInit, OnChanges, OnDestroy {
           this.close.emit(null);
         };
         break;
+      case 'reload':
+        this.srv.reload(res.item.url);
     }
     if (!fn) {
       return;
